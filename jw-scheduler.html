@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JW Meeting Duties Scheduler</title>
+<title>Meeting Duties Scheduler</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -131,7 +131,7 @@
 <header>
   <div class="header-inner">
     <div>
-      <div class="header-title">✦ JW Meeting Duties Scheduler</div>
+      <div class="header-title">✦ Meeting Duties Scheduler</div>
       <div class="header-sub">Congregation Assignment Generator</div>
     </div>
     <button class="dark-toggle" onclick="toggleDark()">🌙 Dark</button>
@@ -502,29 +502,17 @@ function generateSchedule(){
   if(meetingDates.length===0){ showConfigError('No meeting days found in selected range.'); return; }
 
   // ── Init stats ──
-  // Each person tracks:
-  //   catTotal[category]   → total times assigned to that specific category
-  //   weekAssigned[weekKey]→ set of assignments this week
-  //   catHistory[cat]      → array of meeting indices
-  //   lastMeeting          → last meeting index assigned (any category)
   assignmentStats={};
   const allNames = [...new Set(Object.values(persons).flat())];
   allNames.forEach(n=>{
-    assignmentStats[n]={
-      catTotal:{},        // per-category total
-      weekAssigned:{},    // weekKey → Set of categories assigned
-      catHistory:{},      // category → [meetingIdx, ...]
-      lastMeeting:-99     // last meeting index (any assignment)
-    };
+    assignmentStats[n]={ catTotal:{}, weekAssigned:{}, catHistory:{}, lastMeeting:-99 };
   });
 
   const warnings=[];
   schedule=meetingDates.map(({date,type},idx)=>buildRow(date,type,idx,warnings));
 
   lastConfig={cong,startVal,endVal,weekendDay,midweekDay};
-  const weekendName = getDayName(weekendDay);
-  const midweekName = getDayName(midweekDay);
-  renderTable(weekendName, midweekName);
+  renderTable(getDayName(weekendDay), getDayName(midweekDay));
   renderStats();
 
   if(warnings.length){
@@ -532,150 +520,163 @@ function generateSchedule(){
   } else {
     document.getElementById('schedWarn').style.display='none';
   }
-
   document.getElementById('printCong').textContent=cong;
   document.getElementById('printPeriod').textContent=getSchedulePeriod();
   switchTab('preview');
 }
 
 // ═══════════════════════════════════════════════════════
-// BUILD ROW
+// BUILD ROW  — Strict-fairness scheduler
 //
-// GROUPS (for weekly-one-assignment rule):
-//   GROUP A (operational): hall, door, parking, AV Tech, AV, stage, microphone
-//   GROUP B (platform):    lastPrayer, chairman, wtReading
+// FAIRNESS GUARANTEE: max-count minus min-count ≤ 1 per role.
 //
-// Rules enforced:
-//   1. Same person cannot appear twice on same day (hard)
-//   2. Same person can have max ONE Group A assignment per week
-//   3. Same person can have max ONE Group B assignment per week
-//   4. A person CAN hold one Group A + one Group B in the same week
-//   5. No same category in last 3 meetings (soft → fallback: not consecutive)
-//   6. Fairness: sort by per-category total (not overall total)
-//      so all qualified people get equal turns in each category
+// HOW IT WORKS:
+//   • Each role has its own counter (catTotal[key]).
+//   • pick() always chooses from the candidates with the LOWEST count
+//     for that role (the "floor" group).  If floor is empty after applying
+//     soft constraints, we still stay within floor ±1 — never beyond.
+//   • Soft constraints (recency, same-day, same-week) only filter WITHIN
+//     the fair tier; they never allow promoting a higher-count person over
+//     a lower-count one.
+//   • AV Tech and AV Normal share ONE counter ('AV') so total AV exposure
+//     is equal across all AV-eligible persons.
+//   • Stage and Microphone each have one shared counter across both slots.
 // ═══════════════════════════════════════════════════════
 function buildRow(date, type, meetingIdx, warnings){
   const isWeekend = type==='Weekend';
   const weekKey   = isoWeekKey(date);
-  const usedToday = new Set(); // persons already assigned on this date
+  const usedToday = new Set();
 
   const st = n => {
-    if(!assignmentStats[n]) assignmentStats[n]={catTotal:{},weekAssigned:{},catHistory:{},lastMeeting:-99};
+    if(!assignmentStats[n])
+      assignmentStats[n]={ catTotal:{}, weekAssigned:{}, catHistory:{}, lastMeeting:-99 };
     return assignmentStats[n];
   };
 
-  /**
-   * pick(pool, category, group)
-   *
-   * group = 'A' (operational) or 'B' (platform)
-   *
-   * Priority:
-   *  1. [HARD]   Not used today
-   *  2. [SOFT]   No same-group assignment this week
-   *  3. [SOFT]   Not same category in last 3 meetings
-   *  4. [FALLBACK] Not consecutive for same category
-   *  5. [SORT]   Fewest total assignments in THIS category → longest gap
-   */
-  const pick = (pool, category, group) => {
+  // ── Strict-fair pick ──────────────────────────────────
+  // pool       : eligible names for this slot
+  // counterKey : shared fairness counter key
+  // group      : 'A' or 'B' (weekly one-per-group limit)
+  // ─────────────────────────────────────────────────────
+  const pick = (pool, counterKey, group) => {
     if(!pool||pool.length===0){
-      warnings.push(`No people listed for "${category}"`);
+      warnings.push(`No people listed for "${counterKey}"`);
       return '—';
     }
 
-    const groupKey = group==='B' ? 'B' : 'A';
-
-    // STEP 1: not used today (hard)
-    let candidates = pool.filter(n=>!usedToday.has(n));
-    if(candidates.length===0){
-      warnings.push(`⚠ Same-day pool exhausted for "${category}" on ${fmtDate(date)}`);
-      candidates=[...pool];
+    // Step 1 [HARD] Not already used on this date
+    let cands = pool.filter(n => !usedToday.has(n));
+    if(cands.length===0){
+      warnings.push(`⚠ Same-day pool exhausted for "${counterKey}" on ${fmtDate(date)}`);
+      cands = [...pool];
     }
 
-    // STEP 2: not already assigned in this group this week (soft)
-    const notThisWeek = candidates.filter(n=>{
+    // Step 2: determine the fair tier (floor count, allow floor+1 only if floor is empty after soft filters)
+    const countOf = n => st(n).catTotal[counterKey]||0;
+    const floorCount = Math.min(...cands.map(countOf));
+    // Fair tier = those at floor count only (strict fairness)
+    let fairCands = cands.filter(n => countOf(n) === floorCount);
+
+    // Step 3 [SOFT] Prefer not already assigned in this group this week — within fair tier
+    const notWeekFair = fairCands.filter(n => {
       const ws = st(n).weekAssigned[weekKey];
-      return !ws || !ws.has(groupKey);
+      return !ws || !ws.has(group);
     });
-    if(notThisWeek.length>0) candidates=notThisWeek;
-    else warnings.push(`ℹ All "${category}" candidates have a Group ${groupKey} assignment this week (${fmtDate(date)})`);
+    // Apply week filter only if result is non-empty
+    let workCands = notWeekFair.length > 0 ? notWeekFair : fairCands;
 
-    // STEP 3: not same category in last 3 meetings (soft)
-    const notSame3 = candidates.filter(n=>{
-      const hist=st(n).catHistory[category]||[];
-      return hist.length===0 || (meetingIdx-hist[hist.length-1])>=3;
+    // Step 4 [SOFT] Prefer not used in last 3 meetings for this role — within working set
+    const notRecent = workCands.filter(n => {
+      const h = st(n).catHistory[counterKey] || [];
+      return h.length===0 || (meetingIdx - h[h.length-1]) >= 3;
     });
-    if(notSame3.length>0) candidates=notSame3;
+    if(notRecent.length > 0) workCands = notRecent;
     else {
-      // STEP 4 fallback: at least not consecutive
-      const notConsec = candidates.filter(n=>{
-        const hist=st(n).catHistory[category]||[];
-        return hist.length===0 || hist[hist.length-1]!==meetingIdx-1;
+      // Fallback: at least not consecutive
+      const notConsec = workCands.filter(n => {
+        const h = st(n).catHistory[counterKey] || [];
+        return h.length===0 || h[h.length-1] !== meetingIdx-1;
       });
-      if(notConsec.length>0) candidates=notConsec;
-      else warnings.push(`⚠ Consecutive repeat for "${category}" on ${fmtDate(date)} — pool too small`);
+      if(notConsec.length > 0) workCands = notConsec;
+      // else keep workCands as-is (unavoidable repeat, pool too small)
     }
 
-    // STEP 5: sort by per-category total (KEY FAIRNESS FIX), then by gap since last
-    candidates.sort((a,b)=>{
-      const sa=st(a), sb=st(b);
-      const ta=(sa.catTotal[category]||0), tb=(sb.catTotal[category]||0);
-      if(ta!==tb) return ta-tb;
-      // secondary: longest gap since last any assignment
-      const ga=meetingIdx - sa.lastMeeting;
-      const gb=meetingIdx - sb.lastMeeting;
-      return gb-ga;
+    // Step 5 [SOFT] If workCands is now empty (all soft filters stripped everyone),
+    // fall back to fair tier without soft constraints — fairness is paramount
+    if(workCands.length === 0) workCands = fairCands;
+
+    // Step 6: among finalists, break ties by longest gap since any assignment,
+    // then shuffle equally-tied names for variety
+    workCands.sort((a,b) => {
+      const ga = meetingIdx - st(a).lastMeeting;
+      const gb = meetingIdx - st(b).lastMeeting;
+      return gb - ga; // longer gap first
     });
+    // Shuffle among those with equal lastMeeting gap (top stratum only)
+    const topGap = meetingIdx - st(workCands[0]).lastMeeting;
+    const topGroup = workCands.filter(n => (meetingIdx - st(n).lastMeeting) === topGap);
+    // Fisher-Yates shuffle on topGroup
+    for(let i=topGroup.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [topGroup[i],topGroup[j]]=[topGroup[j],topGroup[i]];
+    }
+    const chosen = topGroup[0];
 
-    // Random among top tier (within 1 of minimum category total)
-    const minT=st(candidates[0]).catTotal[category]||0;
-    const topTier=candidates.filter(n=>(st(n).catTotal[category]||0)<=minT+1);
-    const chosen=topTier[Math.floor(Math.random()*Math.min(topTier.length,3))];
-
-    // Record stats
+    // ── Record ──
     usedToday.add(chosen);
-    const s=st(chosen);
-    s.catTotal[category]=(s.catTotal[category]||0)+1;
-    s.lastMeeting=meetingIdx;
-    if(!s.weekAssigned[weekKey]) s.weekAssigned[weekKey]=new Set();
-    s.weekAssigned[weekKey].add(groupKey);
-    if(!s.catHistory[category]) s.catHistory[category]=[];
-    s.catHistory[category].push(meetingIdx);
+    const s = st(chosen);
+    s.catTotal[counterKey] = (s.catTotal[counterKey]||0) + 1;
+    s.lastMeeting = meetingIdx;
+    if(!s.weekAssigned[weekKey]) s.weekAssigned[weekKey] = new Set();
+    s.weekAssigned[weekKey].add(group);
+    if(!s.catHistory[counterKey]) s.catHistory[counterKey] = [];
+    s.catHistory[counterKey].push(meetingIdx);
 
     return chosen;
   };
 
-  // ── Common assignments (both meeting types) ──
-  const hall    = pick(persons.hallAttendant,'Hall Attendant','A');
-  const door    = pick(persons.doorAttendant,'Door Attendant','A');
-  const parking = pick(persons.parking,'Parking','A');
+  // ══════════════════════════════════════════════════
+  // ASSIGN ROLES
+  // ══════════════════════════════════════════════════
 
-  // AV: one from avTech + one from av (must be different)
-  const avTechPerson = pick(persons.avTech,'AV Tech','A');
-  let avPool = persons.av.filter(n=>n!==avTechPerson&&!usedToday.has(n));
-  if(avPool.length===0) avPool = persons.av.filter(n=>n!==avTechPerson);
-  const avPerson = pick(avPool,'AV','A');
+  // ── Group A: operational ──
+  const hall    = pick(persons.hallAttendant, 'Hall Attendant', 'A');
+  const door    = pick(persons.doorAttendant, 'Door Attendant', 'A');
+  const parking = pick(persons.parking,       'Parking',        'A');
 
-  // Microphone: 2 different people
-  const mic1 = pick(persons.microphone,'Microphone 1','A');
-  let mic2Pool = persons.microphone.filter(n=>n!==mic1&&!usedToday.has(n));
-  if(mic2Pool.length===0) mic2Pool = persons.microphone.filter(n=>n!==mic1);
-  const mic2 = pick(mic2Pool,'Microphone 2','A');
+  // AV — SHARED COUNTER 'AV' for everyone in either pool
+  // Tech slot: eligible only from avTech list, sorted by shared 'AV' counter
+  const avTechPerson = pick(persons.avTech, 'AV', 'A');
+
+  // Normal AV slot: av list minus the chosen tech person, same shared counter
+  let avNormalPool = persons.av.filter(n => n !== avTechPerson && !usedToday.has(n));
+  if(avNormalPool.length===0) avNormalPool = persons.av.filter(n => n !== avTechPerson);
+  const avPerson = pick(avNormalPool, 'AV', 'A');
+
+  // Microphone — SHARED COUNTER 'Microphone' for both slots
+  const mic1 = pick(persons.microphone, 'Microphone', 'A');
+  let mic2Pool = persons.microphone.filter(n => n !== mic1 && !usedToday.has(n));
+  if(mic2Pool.length===0) mic2Pool = persons.microphone.filter(n => n !== mic1);
+  const mic2 = pick(mic2Pool, 'Microphone', 'A');
 
   // ── Meeting-type specific ──
   let lastPrayer='', stage1='', stage2='', chairman='', wtReading='';
 
   if(isWeekend){
-    // Weekend: 1 stage person, + last prayer, chairman, WT reading (Group B)
-    stage1     = pick(persons.stage,'Stage','A');
-    lastPrayer = pick(persons.lastPrayer,'Last Prayer','B');
-    chairman   = pick(persons.chairman,'Chairman','B');
-    wtReading  = pick(persons.wtReading,'WT Reading','B');
+    // Stage — 1 person, shared counter 'Stage'
+    stage1 = pick(persons.stage, 'Stage', 'A');
+
+    // Group B: Last Prayer, Chairman, WT Reading — each own counter
+    lastPrayer = pick(persons.lastPrayer, 'Last Prayer', 'B');
+    chairman   = pick(persons.chairman,   'Chairman',    'B');
+    wtReading  = pick(persons.wtReading,  'WT Reading',  'B');
+
   } else {
-    // Midweek: 2 stage persons, no Group B
-    stage1 = pick(persons.stage,'Stage 1','A');
-    let s2Pool = persons.stage.filter(n=>n!==stage1&&!usedToday.has(n));
-    if(s2Pool.length===0) s2Pool = persons.stage.filter(n=>n!==stage1);
-    stage2 = pick(s2Pool,'Stage 2','A');
+    // Midweek — 2 Stage persons, SAME shared counter 'Stage'
+    stage1 = pick(persons.stage, 'Stage', 'A');
+    let s2Pool = persons.stage.filter(n => n !== stage1 && !usedToday.has(n));
+    if(s2Pool.length===0) s2Pool = persons.stage.filter(n => n !== stage1);
+    stage2 = pick(s2Pool, 'Stage', 'A');
   }
 
   return {date,type,hall,door,parking,lastPrayer,avTech:avTechPerson,av:avPerson,stage1,stage2,mic1,mic2,chairman,wtReading};
@@ -709,62 +710,125 @@ function renderTable(weekendName, midweekName){
 
 // ═══════════════════════════════════════════════════════
 // STATS
+// Counter keys used by the new algorithm:
+//   'AV'           → shared for both AV Tech slot and AV normal slot
+//   'Stage'        → shared for Stage-1 and Stage-2
+//   'Microphone'   → shared for Mic-1 and Mic-2
+//   'Last Prayer'  → own key
+//   'Chairman'     → own key
+//   'WT Reading'   → own key
+//   'Hall Attendant', 'Door Attendant', 'Parking' → own keys
 // ═══════════════════════════════════════════════════════
 function renderStats(){
   const el=document.getElementById('statsContent');
   const entries=Object.entries(assignmentStats).filter(([,s])=>Object.keys(s.catTotal||{}).length>0);
   if(!entries.length){ el.textContent='No data yet.'; return; }
 
-  // Sort by total assignments descending
+  // Compute actual slot-counts from the schedule rows for AV breakdown
+  // (since both tech and normal share the 'AV' counter, we track actual slots per row)
+  const actualAvTech={}, actualAvNorm={};
+  schedule.forEach(r=>{
+    if(r.avTech && r.avTech!=='—') actualAvTech[r.avTech]=(actualAvTech[r.avTech]||0)+1;
+    if(r.av     && r.av!=='—')     actualAvNorm[r.av]    =(actualAvNorm[r.av]    ||0)+1;
+  });
+
+  // Sort: total assignments desc
   entries.sort((a,b)=>{
     const ta=Object.values(a[1].catTotal||{}).reduce((s,v)=>s+v,0);
     const tb=Object.values(b[1].catTotal||{}).reduce((s,v)=>s+v,0);
     return tb-ta;
   });
 
+  // Compute min/max per column for colour-coding fairness
+  const cols=['Last Prayer','Chairman','WT Reading','AV','Stage','Microphone','Hall Attendant','Door Attendant','Parking'];
+  const colMin={}, colMax={};
+  cols.forEach(c=>{
+    const vals=entries.map(([,s])=>s.catTotal[c]||0).filter(v=>v>0);
+    colMin[c]=vals.length?Math.min(...vals):0;
+    colMax[c]=vals.length?Math.max(...vals):0;
+  });
+  // AV breakdown uses actual counts
+  const avVals=[...Object.values(actualAvTech),...Object.values(actualAvNorm)].filter(v=>v>0);
+  const avMin=avVals.length?Math.min(...avVals):0;
+  const avMax=avVals.length?Math.max(...avVals):0;
+
+  // Fairness badge: red/orange if max-min > 1 (strict fairness violation)
+  const badge=(val, min, max)=>{
+    if(val===0) return `<span style="color:var(--text2)">${val}</span>`;
+    const isHigh = val===max && max>min+1;
+    const isLow  = val===min && max>min+1;
+    const col    = isHigh?'#b71c1c': isLow?'#e65100':'var(--success)';
+    const flag   = (isHigh||isLow) ? ' ⚠' : '';
+    return `<span style="color:${col};font-weight:700">${val}${flag}</span>`;
+  };
+
+  // Compute per-role fairness summary
+  const fairnessSummary = [];
+  cols.forEach(c => {
+    const mn = colMin[c], mx = colMax[c];
+    if(mx > 0 && mx > mn+1) fairnessSummary.push(`"${c}" (max ${mx}, min ${mn})`);
+  });
+
   let html=`<div style="font-size:.82rem;color:var(--text2);margin-bottom:14px">
-    Fairness is enforced <b>per category</b>: each person's turn count for each specific role is tracked independently.
-    Last Prayer, Chairman, and WT Reading are in Group B — a person can hold one Group A + one Group B per week.
+    <b>Fairness key:</b>
+    <span style="color:#b71c1c;font-weight:700">■ High ⚠</span>&nbsp;
+    <span style="color:#e65100;font-weight:700">■ Low ⚠</span>&nbsp;
+    <span style="color:var(--success);font-weight:700">■ Balanced</span>&nbsp;—
+    Strict fairness: max − min ≤ 1 per role for all qualified persons.
+    AV column = total AV slots (tech + normal combined).
+    ${fairnessSummary.length===0
+      ? '<b style="color:var(--success)">✓ All roles are within ±1 — fully balanced!</b>'
+      : `<b style="color:#b71c1c">⚠ Imbalance in: ${fairnessSummary.join(', ')}</b>`}
   </div>`;
 
   html+=`<div style="overflow-x:auto;margin-bottom:20px">
-  <table style="border-collapse:collapse;font-size:.75rem;width:100%;min-width:700px">
-  <thead><tr style="background:var(--accent);color:white">
-    <th style="padding:6px 8px;text-align:left;font-weight:600">Person</th>
-    <th style="padding:6px 8px">Total</th>
-    <th style="padding:6px 8px">Last Prayer</th>
-    <th style="padding:6px 8px">Chairman</th>
-    <th style="padding:6px 8px">WT Reading</th>
-    <th style="padding:6px 8px">Hall</th>
-    <th style="padding:6px 8px">Door</th>
-    <th style="padding:6px 8px">Parking</th>
-    <th style="padding:6px 8px">AV Tech</th>
-    <th style="padding:6px 8px">AV</th>
-    <th style="padding:6px 8px">Stage</th>
-    <th style="padding:6px 8px">Mic</th>
-  </tr></thead><tbody>`;
+  <table style="border-collapse:collapse;font-size:.75rem;width:100%;min-width:820px">
+  <thead>
+    <tr style="background:var(--accent);color:white">
+      <th rowspan="2" style="padding:6px 8px;text-align:left;font-weight:600;vertical-align:bottom">Person</th>
+      <th rowspan="2" style="padding:6px 8px;vertical-align:bottom">Total</th>
+      <th colspan="3" style="padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.3)">Group B (Platform)</th>
+      <th colspan="3" style="padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.3)">Attendance</th>
+      <th colspan="4" style="padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.3)">Technical (Group A)</th>
+    </tr>
+    <tr style="background:#6b1414;color:white;font-size:.7rem">
+      <th style="padding:4px 6px">Last Prayer</th>
+      <th style="padding:4px 6px">Chairman</th>
+      <th style="padding:4px 6px">WT Reading</th>
+      <th style="padding:4px 6px">Hall</th>
+      <th style="padding:4px 6px">Door</th>
+      <th style="padding:4px 6px">Parking</th>
+      <th style="padding:4px 6px">AV (total)</th>
+      <th style="padding:4px 6px">→ Tech slot</th>
+      <th style="padding:4px 6px">→ Normal slot</th>
+      <th style="padding:4px 6px">Stage</th>
+      <th style="padding:4px 6px">Mic</th>
+    </tr>
+  </thead><tbody>`;
 
   entries.forEach(([name,s],i)=>{
     const ch=s.catTotal||{};
     const total=Object.values(ch).reduce((sum,v)=>sum+v,0);
     const bg=i%2===0?'var(--surface)':'var(--gold-light)';
     const lp=ch['Last Prayer']||0, chm=ch['Chairman']||0, wt=ch['WT Reading']||0;
-    const lpStyle=lp>0?'color:var(--accent);font-weight:600':'';
-    const chmStyle=chm>0?'color:var(--accent);font-weight:600':'';
-    const wtStyle=wt>0?'color:var(--accent);font-weight:600':'';
+    const av=ch['AV']||0;
+    const avT=actualAvTech[name]||0, avN=actualAvNorm[name]||0;
+    const st=ch['Stage']||0, mc=ch['Microphone']||0;
+    const hall=ch['Hall Attendant']||0, door=ch['Door Attendant']||0, park=ch['Parking']||0;
     html+=`<tr style="background:${bg}">
       <td style="padding:5px 8px;font-weight:600;border:1px solid var(--border)">${name}</td>
       <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);font-weight:700">${total}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);${lpStyle}">${lp}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);${chmStyle}">${chm}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);${wtStyle}">${wt}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${ch['Hall Attendant']||0}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${ch['Door Attendant']||0}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${ch['Parking']||0}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${ch['AV Tech']||0}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${ch['AV']||0}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Stage']||0)+(ch['Stage 1']||0)+(ch['Stage 2']||0)}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Microphone 1']||0)+(ch['Microphone 2']||0)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(lp,colMin['Last Prayer'],colMax['Last Prayer'])}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(chm,colMin['Chairman'],colMax['Chairman'])}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(wt,colMin['WT Reading'],colMax['WT Reading'])}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(hall,colMin['Hall Attendant'],colMax['Hall Attendant'])}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(door,colMin['Door Attendant'],colMax['Door Attendant'])}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(park,colMin['Parking'],colMax['Parking'])}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);font-weight:700">${badge(av,colMin['AV'],colMax['AV'])}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);font-size:.72rem">${badge(avT,avMin,avMax)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);font-size:.72rem">${badge(avN,avMin,avMax)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(st,colMin['Stage'],colMax['Stage'])}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(mc,colMin['Microphone'],colMax['Microphone'])}</td>
     </tr>`;
   });
   html+=`</tbody></table></div>`;
