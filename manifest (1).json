@@ -1,0 +1,11 @@
+{
+  "background_color": "#ffffff",
+  "dir": "auto",
+  "display": "standalone",
+  "name": "JW Scheduler",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "JW Scheduler",
+  "start_url": "https://paulootan.github.io/JWMeetingAssignments/jw-scheduler.html",
+  "theme_color": "#ffffff"
+}
