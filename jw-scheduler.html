@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meeting Duties Scheduler</title>
+<title>JW Meeting Duties Scheduler</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -31,7 +31,6 @@
   .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:20px}
   .card-title{font-family:'Crimson Pro',serif;font-size:1.2rem;font-weight:600;color:var(--accent);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--gold-light);display:flex;align-items:center;gap:8px}
 
-  /* UPLOAD */
   .upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);position:relative}
   .upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--gold-light)}
   .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
@@ -40,13 +39,12 @@
   .upload-hint{font-size:.78rem;color:var(--text2);margin-top:6px}
   .upload-success{margin-top:12px;padding:10px 16px;background:#e8f5e9;border:1px solid #81c784;border-radius:var(--radius);color:var(--success);font-size:.88rem;display:none}
 
-  /* FORM */
   .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:16px}
   .form-group label{display:block;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:6px}
   .form-group input,.form-group select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none;transition:border-color .2s;-webkit-appearance:none}
   .form-group input:focus,.form-group select:focus{border-color:var(--accent)}
 
-  /* CUSTOM CHECKBOX/RADIO TOGGLE PILLS */
+  /* PILL CHECKBOXES */
   .day-group{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
   .day-pill{position:relative}
   .day-pill input{position:absolute;opacity:0;width:0;height:0}
@@ -66,7 +64,6 @@
   .day-pill input:checked + label .tick{display:inline}
   .day-pill input:disabled + label{opacity:.4;cursor:not-allowed}
 
-  /* BUTTONS */
   .btn{padding:10px 22px;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:7px;text-decoration:none}
   .btn-primary{background:var(--accent);color:white;box-shadow:0 2px 8px rgba(139,26,26,.25)}
   .btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
@@ -78,19 +75,17 @@
   .btn-export.blue{background:#1565c0}.btn-export.blue:hover{background:#0d47a1}
   .btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
 
-  /* ALERTS */
   .alert{padding:12px 16px;border-radius:var(--radius);font-size:.88rem;margin-bottom:16px;display:none}
   .alert-warn{background:#fff8e1;border:1px solid #ffe082;color:var(--warn)}
   .alert-error{background:#ffebee;border:1px solid #ef9a9a;color:#b71c1c}
 
-  /* TABLE */
   .schedule-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
   #scheduleTable{width:100%;border-collapse:collapse;font-size:.82rem;min-width:860px}
   #scheduleTable thead tr{background:var(--accent);color:white}
   #scheduleTable th{padding:10px 8px;text-align:center;font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;border:1px solid rgba(255,255,255,.15);white-space:nowrap}
   #scheduleTable th:first-child{text-align:left}
   #scheduleTable td{padding:10px 8px;border:1px solid var(--border);vertical-align:top;font-size:.8rem;line-height:1.4}
-  #scheduleTable td:first-child{font-weight:600;font-size:.78rem;white-space:nowrap;min-width:100px;background:var(--surface2)}
+  #scheduleTable td:first-child{font-weight:600;font-size:.78rem;white-space:nowrap;min-width:110px;background:var(--surface2)}
   #scheduleTable tbody tr:nth-child(even) td{background:var(--gold-light)}
   #scheduleTable tbody tr:nth-child(even) td:first-child{background:#ebe6d6}
   #scheduleTable tbody tr:hover td{background:#ffe8e8!important}
@@ -98,32 +93,24 @@
   td[contenteditable=true]{cursor:text;outline:none}
   td[contenteditable=true]:focus{box-shadow:inset 0 0 0 2px var(--accent);background:#fff9f9!important}
 
-  /* PRINT HEADER */
   .print-header{display:none;text-align:center;margin-bottom:20px}
   .print-header h2{font-family:'Crimson Pro',serif;font-size:1.6rem}
   .print-header h3{color:var(--accent);font-size:1.2rem}
 
-  /* STATS */
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
-  .stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-size:.8rem}
-  .stat-name{font-weight:600;color:var(--text);margin-bottom:3px}
-  .stat-count{color:var(--accent);font-size:1.1rem;font-weight:700;font-family:'Crimson Pro',serif}
 
-  /* DARK */
   body.dark{--bg:#0f0d0b;--surface:#1a1714;--surface2:#231f1b;--border:#3a342e;--text:#e8e4de;--text2:#9a8f83;--gold-light:#2a2418}
   body.dark .upload-zone{background:var(--surface2)}
   body.dark #scheduleTable tbody tr:nth-child(even) td{background:#221e18}
   body.dark #scheduleTable tbody tr:nth-child(even) td:first-child{background:#1e1a15}
   body.dark #scheduleTable td:first-child{background:var(--surface2)}
 
-  /* TABS */
   .tabs{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap}
   .tab{padding:8px 18px;border-radius:20px;cursor:pointer;font-size:.85rem;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:all .2s}
   .tab.active{background:var(--accent);color:white;border-color:var(--accent)}
   .tab-content{display:none}
   .tab-content.active{display:block}
 
-  /* SECTION DIVIDER */
   .section-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:8px;margin-top:4px}
 
   @media(max-width:600px){.header-title{font-size:1.1rem}.card{padding:16px}.form-grid{grid-template-columns:1fr 1fr}}
@@ -144,7 +131,7 @@
 <header>
   <div class="header-inner">
     <div>
-      <div class="header-title">✦ Meeting Duties Scheduler</div>
+      <div class="header-title">✦ JW Meeting Duties Scheduler</div>
       <div class="header-sub">Congregation Assignment Generator</div>
     </div>
     <button class="dark-toggle" onclick="toggleDark()">🌙 Dark</button>
@@ -160,7 +147,6 @@
 
   <!-- SETUP -->
   <div class="tab-content active" id="tab-setup">
-
     <div class="card">
       <div class="card-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -170,7 +156,7 @@
         <input type="file" id="fileInput" accept=".xlsx,.xls,.docx" onchange="handleFile(this.files[0])">
         <div class="upload-icon">📂</div>
         <div class="upload-text">Drag &amp; drop or tap to select file</div>
-        <div class="upload-hint">Excel (.xlsx) or Word (.docx) only</div>
+        <div class="upload-hint">Excel (.xlsx) or Word (.docx) — <strong>PDF not supported for eligibility list</strong></div>
       </div>
       <div style="margin-top:12px">
         <button class="btn btn-secondary" style="font-size:.82rem" onclick="downloadTemplate()">📥 Download Excel Template</button>
@@ -220,7 +206,7 @@
         </div>
       </div>
 
-      <!-- WEEKEND DAY SELECTOR -->
+      <!-- WEEKEND DAY -->
       <div style="margin-bottom:18px">
         <div class="section-label">Weekend Meeting Day <span style="font-weight:400;font-size:.75rem;text-transform:none">(select one)</span></div>
         <div class="day-group">
@@ -235,7 +221,7 @@
         </div>
       </div>
 
-      <!-- MIDWEEK DAY SELECTOR -->
+      <!-- MIDWEEK DAY -->
       <div style="margin-bottom:18px">
         <div class="section-label">Midweek Meeting Day <span style="font-weight:400;font-size:.75rem;text-transform:none">(select one)</span></div>
         <div class="day-group">
@@ -322,9 +308,9 @@
 </div>
 
 <script>
-// ─────────────────────────────────────────────
-// DATA
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
+// DATA STORE
+// ═══════════════════════════════════════════════════════
 let persons = {
   hallAttendant:[], doorAttendant:[], parking:[], lastPrayer:[],
   avTech:[], av:[], stage:[], microphone:[], chairman:[], wtReading:[]
@@ -333,25 +319,35 @@ let schedule = [];
 let assignmentStats = {};
 let lastConfig = null;
 
-// ─────────────────────────────────────────────
-// ASSIGNMENT GROUPS
-// GROUP A (operational): hall, door, parking, AV, stage, microphone
-// GROUP B (platform):    lastPrayer, chairman, wtReading
-//
-// Rules:
-//   • Max ONE Group A assignment per person per week
-//   • Max ONE Group B assignment per person per week
-//   • A person CAN hold one Group A + one Group B in the same week
-//   • Fairness within each group uses its own counter (groupATotal / groupBTotal)
-//     so AV-heavy people don't crowd out Group B slots and vice versa
-//   • Across Group B categories, a shared "groupBTotal" ensures Joyal/Paulson/Johnson
-//     get equal Chairman/WT Reading turns alongside Ebin/James/etc.
-//   • Same category: avoid repeat within last 3 meetings (soft), never consecutive (hard-soft)
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
+// COLUMN MAPPING — handles multiple header variants
+// "AV Technical" is the actual header in the sample Excel
+// ═══════════════════════════════════════════════════════
+const COL_MAP = [
+  {match:/audio\s*video\s*technical/i, key:'avTech'},
+  {match:/av\s*technical/i,            key:'avTech'},
+  {match:/technical\s*person/i,        key:'avTech'},
+  {match:/av\s*tech/i,                 key:'avTech'},
+  {match:/hall\s*attendant/i,          key:'hallAttendant'},
+  {match:/door\s*attendant/i,          key:'doorAttendant'},
+  {match:/\bparking\b/i,               key:'parking'},
+  {match:/last\s*prayer/i,             key:'lastPrayer'},
+  {match:/audio\s*video/i,             key:'av'},
+  {match:/\bstage\b/i,                 key:'stage'},
+  {match:/microphone/i,                key:'microphone'},
+  {match:/chairman/i,                  key:'chairman'},
+  {match:/wt\s*reading/i,              key:'wtReading'},
+  {match:/watchtower/i,                key:'wtReading'},
+];
+function matchCol(h){
+  const s = String(h).trim();
+  for(const c of COL_MAP) if(c.match.test(s)) return c.key;
+  return null;
+}
 
-// ─────────────────────────────────────────────
-// UPLOAD
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
+// UPLOAD HANDLERS
+// ═══════════════════════════════════════════════════════
 function ev(e){ e.preventDefault(); document.getElementById('uploadZone').classList.add('drag'); }
 function drop(e){
   e.preventDefault();
@@ -361,6 +357,7 @@ function drop(e){
 function handleFile(file){
   if(!file) return;
   const ext = file.name.split('.').pop().toLowerCase();
+  hideError();
   if(ext==='xlsx'||ext==='xls') parseExcel(file);
   else if(ext==='docx') parseDOCX(file);
   else if(ext==='pdf') showUploadError('PDF is not supported for the eligibility list. Please use the Excel (.xlsx) template.');
@@ -397,34 +394,12 @@ function parseDOCX(file){
   document.head.appendChild(s);
 }
 
-// Column name matching — specific patterns first
-const COL_MAP = [
-  {match:/audio video technical/i,  key:'avTech'},
-  {match:/av technical/i,           key:'avTech'},
-  {match:/technical person/i,       key:'avTech'},
-  {match:/hall attendant/i,         key:'hallAttendant'},
-  {match:/door attendant/i,         key:'doorAttendant'},
-  {match:/parking/i,                key:'parking'},
-  {match:/last prayer/i,            key:'lastPrayer'},
-  {match:/audio video/i,            key:'av'},
-  {match:/\bstage\b/i,              key:'stage'},
-  {match:/microphone/i,             key:'microphone'},
-  {match:/chairman/i,               key:'chairman'},
-  {match:/wt reading/i,             key:'wtReading'},
-  {match:/watchtower/i,             key:'wtReading'},
-];
-function matchCol(h){
-  const s = String(h).trim();
-  for(const c of COL_MAP) if(c.match.test(s)) return c.key;
-  return null;
-}
-
 function loadFromMatrix(data){
   let hRow = -1;
-  for(let r=0;r<Math.min(data.length,6);r++){
-    if(data[r].some(c=>/hall|door|parking|audio|stage|microphone/i.test(String(c)))){hRow=r;break;}
+  for(let r=0;r<Math.min(data.length,8);r++){
+    if(data[r].some(c=>/hall|door|parking|audio|stage|microphone|technical/i.test(String(c)))){hRow=r;break;}
   }
-  if(hRow<0){ showUploadError('Could not detect column headers. Make sure row 1 has: "Hall Attendant", "Audio Video", etc.'); return; }
+  if(hRow<0){ showUploadError('Could not detect column headers. Make sure row 1 has: "Hall Attendant", "Audio Video", "AV Technical", etc.'); return; }
 
   const cols = data[hRow].map(h=>matchCol(h));
   for(const k in persons) persons[k]=[];
@@ -442,12 +417,12 @@ function loadFromMatrix(data){
 
 function finalizeLoad(){
   const warnings=[];
-  if(persons.avTech.length<1) warnings.push('AV Technical Person: none found — check column header in file');
+  if(persons.avTech.length<1) warnings.push('AV Technical Person: none found — check column header matches "AV Technical" or "Audio Video Technical Person"');
   if(persons.av.length<1) warnings.push('Audio Video: none found');
   if(persons.microphone.length<2) warnings.push('Microphone: fewer than 2 people');
 
   const total = Object.values(persons).reduce((s,a)=>s+a.length,0);
-  if(total===0){ showUploadError('No names found. Check the file format.'); return; }
+  if(total===0){ showUploadError('No names found. Check the file format and column headers.'); return; }
 
   const breakdown = Object.entries(persons)
     .filter(([,v])=>v.length>0)
@@ -458,7 +433,7 @@ function finalizeLoad(){
   document.getElementById('uploadSuccess').innerHTML=
     `✓ Loaded ${total} entries across ${Object.values(persons).filter(a=>a.length>0).length} categories.<br>
      <small style="opacity:.8">${breakdown}</small>`;
-  if(warnings.length) showWarn(warnings.join(' | '));
+  if(warnings.length) showWarn(warnings.join('<br>'));
   hideError();
 }
 
@@ -475,37 +450,17 @@ function toggleManual(){
   const el=document.getElementById('manualEntry');
   el.style.display=el.style.display==='none'?'block':'none';
 }
+function syncDaySelectors(){}
 
-// ─────────────────────────────────────────────
-// DAY SELECTOR — enforce mutual exclusivity with UI feedback
-// ─────────────────────────────────────────────
-function syncDaySelectors(){
-  // Radio buttons already enforce one-of-each natively — nothing extra needed.
-  // This is a no-op hook left for future extension.
-}
-
-// ─────────────────────────────────────────────
-// DATE FORMATTING
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
+// DATE / WEEK HELPERS
+// ═══════════════════════════════════════════════════════
 const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 function fmtDate(d){
-  const day = String(d.getDate()).padStart(2,'0');
-  const mon = MONTHS[d.getMonth()];
-  const yr  = d.getFullYear();
-  return `${day}-${mon}-${yr}`;
+  return String(d.getDate()).padStart(2,'0')+'-'+MONTHS[d.getMonth()]+'-'+d.getFullYear();
 }
-function formatDateLabel(d){
-  return d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
-}
-function getDayName(jsDay){
-  return DAY_NAMES[jsDay];
-}
-
-// ─────────────────────────────────────────────
-// ISO WEEK KEY
-// ─────────────────────────────────────────────
 function isoWeekKey(d){
   const t=new Date(d.getTime());
   t.setHours(0,0,0,0);
@@ -514,10 +469,12 @@ function isoWeekKey(d){
   const wk=Math.ceil((((t-ys)/86400000)+1)/7);
   return `${t.getFullYear()}-${String(wk).padStart(2,'0')}`;
 }
+function getDayName(jsDay){ return DAY_NAMES[jsDay]; }
+function formatDateLabel(d){ return d.toLocaleDateString('en-US',{month:'long',year:'numeric'}); }
 
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
 // SCHEDULE GENERATION
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
 function generateSchedule(){
   const cong     = document.getElementById('congName').value.trim()||'CONGREGATION';
   const startVal = document.getElementById('startDate').value;
@@ -529,13 +486,11 @@ function generateSchedule(){
   const start=new Date(startVal+'T00:00:00');
   const end  =new Date(endVal  +'T00:00:00');
   if(end<start){ showConfigError('End date must be after start date.'); return; }
-
   if(Object.values(persons).reduce((s,a)=>s+a.length,0)===0){
     showConfigError('No names loaded. Please upload your assignment list file first.'); return;
   }
   hideConfigError();
 
-  // Build meeting dates
   const meetingDates=[];
   const cur=new Date(start);
   while(cur<=end){
@@ -546,17 +501,20 @@ function generateSchedule(){
   }
   if(meetingDates.length===0){ showConfigError('No meeting days found in selected range.'); return; }
 
-  // Init per-person stats
+  // ── Init stats ──
+  // Each person tracks:
+  //   catTotal[category]   → total times assigned to that specific category
+  //   weekAssigned[weekKey]→ set of assignments this week
+  //   catHistory[cat]      → array of meeting indices
+  //   lastMeeting          → last meeting index assigned (any category)
   assignmentStats={};
-  new Set(Object.values(persons).flat()).forEach(n=>{
+  const allNames = [...new Set(Object.values(persons).flat())];
+  allNames.forEach(n=>{
     assignmentStats[n]={
-      groupATotal:0,   // total Group A assignments (hall/door/parking/av/stage/mic)
-      groupBTotal:0,   // total Group B assignments (lastPrayer/chairman/wtReading)
-      lastWeekA:null,  // ISO week of last Group A assignment
-      lastWeekB:null,  // ISO week of last Group B assignment
-      lastMeetingA:-99, // meeting index of last Group A assignment
-      lastMeetingB:-99, // meeting index of last Group B assignment
-      catHistory:{}    // { category: [meetingIndex, ...] } for 3-meeting gap rule
+      catTotal:{},        // per-category total
+      weekAssigned:{},    // weekKey → Set of categories assigned
+      catHistory:{},      // category → [meetingIdx, ...]
+      lastMeeting:-99     // last meeting index (any assignment)
     };
   });
 
@@ -564,14 +522,13 @@ function generateSchedule(){
   schedule=meetingDates.map(({date,type},idx)=>buildRow(date,type,idx,warnings));
 
   lastConfig={cong,startVal,endVal,weekendDay,midweekDay};
-
   const weekendName = getDayName(weekendDay);
   const midweekName = getDayName(midweekDay);
   renderTable(weekendName, midweekName);
   renderStats();
 
   if(warnings.length){
-    showSchedWarn([...new Set(warnings)].slice(0,6).join('<br>'));
+    showSchedWarn([...new Set(warnings)].slice(0,8).join('<br>'));
   } else {
     document.getElementById('schedWarn').style.display='none';
   }
@@ -581,40 +538,51 @@ function generateSchedule(){
   switchTab('preview');
 }
 
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
 // BUILD ROW
-// ─────────────────────────────────────────────
+//
+// GROUPS (for weekly-one-assignment rule):
+//   GROUP A (operational): hall, door, parking, AV Tech, AV, stage, microphone
+//   GROUP B (platform):    lastPrayer, chairman, wtReading
+//
+// Rules enforced:
+//   1. Same person cannot appear twice on same day (hard)
+//   2. Same person can have max ONE Group A assignment per week
+//   3. Same person can have max ONE Group B assignment per week
+//   4. A person CAN hold one Group A + one Group B in the same week
+//   5. No same category in last 3 meetings (soft → fallback: not consecutive)
+//   6. Fairness: sort by per-category total (not overall total)
+//      so all qualified people get equal turns in each category
+// ═══════════════════════════════════════════════════════
 function buildRow(date, type, meetingIdx, warnings){
   const isWeekend = type==='Weekend';
   const weekKey   = isoWeekKey(date);
-  const usedToday = new Set();
+  const usedToday = new Set(); // persons already assigned on this date
+
+  const st = n => {
+    if(!assignmentStats[n]) assignmentStats[n]={catTotal:{},weekAssigned:{},catHistory:{},lastMeeting:-99};
+    return assignmentStats[n];
+  };
 
   /**
-   * pick(pool, category, groupKey)
+   * pick(pool, category, group)
    *
-   * Priority chain (each step narrows candidates, falling back if result is empty):
-   *  1. [HARD]      Not assigned twice on same day
-   *  2. [SOFT]      No same-group assignment this calendar week
-   *  3. [SOFT]      Gap since last Group assignment >= 2 meetings (prevents consecutive-week monopoly)
-   *  4. [SOFT]      Not same category in last 3 meetings
-   *  5. [FALLBACK]  Not same category as last meeting (consecutive block)
-   *  6. [SORT]      Fewest group-specific assignments → longest gap since last assigned → random
+   * group = 'A' (operational) or 'B' (platform)
    *
-   * The key fix: sort by groupATotal or groupBTotal (NOT overall total).
-   * This prevents AV-heavy people (high overall total) from scoring "behind"
-   * Group-B-light people and stealing Chairman/WT Reading slots.
+   * Priority:
+   *  1. [HARD]   Not used today
+   *  2. [SOFT]   No same-group assignment this week
+   *  3. [SOFT]   Not same category in last 3 meetings
+   *  4. [FALLBACK] Not consecutive for same category
+   *  5. [SORT]   Fewest total assignments in THIS category → longest gap
    */
-  const pick = (pool, category, groupKey) => {
+  const pick = (pool, category, group) => {
     if(!pool||pool.length===0){
       warnings.push(`No people listed for "${category}"`);
       return '—';
     }
 
-    const totalField   = groupKey==='B' ? 'groupBTotal'   : 'groupATotal';
-    const weekField    = groupKey==='B' ? 'lastWeekB'     : 'lastWeekA';
-    const meetingField = groupKey==='B' ? 'lastMeetingB'  : 'lastMeetingA';
-
-    const st = n => assignmentStats[n] || {groupATotal:0,groupBTotal:0,lastWeekA:null,lastWeekB:null,lastMeetingA:-99,lastMeetingB:-99,catHistory:{}};
+    const groupKey = group==='B' ? 'B' : 'A';
 
     // STEP 1: not used today (hard)
     let candidates = pool.filter(n=>!usedToday.has(n));
@@ -624,100 +592,98 @@ function buildRow(date, type, meetingIdx, warnings){
     }
 
     // STEP 2: not already assigned in this group this week (soft)
-    const notThisWeek = candidates.filter(n=>st(n)[weekField]!==weekKey);
+    const notThisWeek = candidates.filter(n=>{
+      const ws = st(n).weekAssigned[weekKey];
+      return !ws || !ws.has(groupKey);
+    });
     if(notThisWeek.length>0) candidates=notThisWeek;
-    else warnings.push(`ℹ All "${category}" candidates have a ${groupKey==='B'?'Group B':'Group A'} assignment this week on ${fmtDate(date)}`);
+    else warnings.push(`ℹ All "${category}" candidates have a Group ${groupKey} assignment this week (${fmtDate(date)})`);
 
-    // STEP 3: gap of at least 2 meetings since last same-group assignment (stops back-to-back weeks)
-    const notRecent = candidates.filter(n=>meetingIdx - st(n)[meetingField] >= 2);
-    if(notRecent.length>0) candidates=notRecent;
-
-    // STEP 4: not same category in last 3 meetings
+    // STEP 3: not same category in last 3 meetings (soft)
     const notSame3 = candidates.filter(n=>{
       const hist=st(n).catHistory[category]||[];
       return hist.length===0 || (meetingIdx-hist[hist.length-1])>=3;
     });
     if(notSame3.length>0) candidates=notSame3;
     else {
-      // STEP 5 fallback: at least not consecutive
+      // STEP 4 fallback: at least not consecutive
       const notConsec = candidates.filter(n=>{
         const hist=st(n).catHistory[category]||[];
         return hist.length===0 || hist[hist.length-1]!==meetingIdx-1;
       });
       if(notConsec.length>0) candidates=notConsec;
-      else warnings.push(`⚠ Consecutive "${category}" repeat on ${fmtDate(date)} — pool too small`);
+      else warnings.push(`⚠ Consecutive repeat for "${category}" on ${fmtDate(date)} — pool too small`);
     }
 
-    // STEP 6: sort by group-specific total (KEY FIX), then by gap since last
+    // STEP 5: sort by per-category total (KEY FAIRNESS FIX), then by gap since last
     candidates.sort((a,b)=>{
       const sa=st(a), sb=st(b);
-      const ta=sa[totalField], tb=sb[totalField];
+      const ta=(sa.catTotal[category]||0), tb=(sb.catTotal[category]||0);
       if(ta!==tb) return ta-tb;
-      // Secondary: longest gap since last assignment in this group
-      const ga=meetingIdx - sa[meetingField];
-      const gb=meetingIdx - sb[meetingField];
+      // secondary: longest gap since last any assignment
+      const ga=meetingIdx - sa.lastMeeting;
+      const gb=meetingIdx - sb.lastMeeting;
       return gb-ga;
     });
 
-    // Random among top tier (those within 1 of minimum group total)
-    const minT=st(candidates[0])[totalField];
-    const topTier=candidates.filter(n=>st(n)[totalField]<=minT+1);
+    // Random among top tier (within 1 of minimum category total)
+    const minT=st(candidates[0]).catTotal[category]||0;
+    const topTier=candidates.filter(n=>(st(n).catTotal[category]||0)<=minT+1);
     const chosen=topTier[Math.floor(Math.random()*Math.min(topTier.length,3))];
 
-    // Record
+    // Record stats
     usedToday.add(chosen);
-    if(!assignmentStats[chosen])
-      assignmentStats[chosen]={groupATotal:0,groupBTotal:0,lastWeekA:null,lastWeekB:null,lastMeetingA:-99,lastMeetingB:-99,catHistory:{}};
-    const s=assignmentStats[chosen];
-    if(groupKey==='B'){ s.groupBTotal++; s.lastWeekB=weekKey; s.lastMeetingB=meetingIdx; }
-    else              { s.groupATotal++; s.lastWeekA=weekKey; s.lastMeetingA=meetingIdx; }
+    const s=st(chosen);
+    s.catTotal[category]=(s.catTotal[category]||0)+1;
+    s.lastMeeting=meetingIdx;
+    if(!s.weekAssigned[weekKey]) s.weekAssigned[weekKey]=new Set();
+    s.weekAssigned[weekKey].add(groupKey);
     if(!s.catHistory[category]) s.catHistory[category]=[];
     s.catHistory[category].push(meetingIdx);
 
     return chosen;
   };
 
-  // ── Common (both meeting types) ──
+  // ── Common assignments (both meeting types) ──
   const hall    = pick(persons.hallAttendant,'Hall Attendant','A');
   const door    = pick(persons.doorAttendant,'Door Attendant','A');
   const parking = pick(persons.parking,'Parking','A');
 
-  // AV: one from avTech + one from av (different people)
+  // AV: one from avTech + one from av (must be different)
   const avTechPerson = pick(persons.avTech,'AV Tech','A');
-  const avPool  = persons.av.filter(n=>n!==avTechPerson&&!usedToday.has(n));
-  const avPerson= avPool.length>0
-    ? pick(avPool,'AV','A')
-    : pick(persons.av.filter(n=>n!==avTechPerson),'AV','A');
+  let avPool = persons.av.filter(n=>n!==avTechPerson&&!usedToday.has(n));
+  if(avPool.length===0) avPool = persons.av.filter(n=>n!==avTechPerson);
+  const avPerson = pick(avPool,'AV','A');
 
   // Microphone: 2 different people
-  const mic1     = pick(persons.microphone,'Microphone 1','A');
-  const mic2Pool = persons.microphone.filter(n=>n!==mic1&&!usedToday.has(n));
-  const mic2     = mic2Pool.length>0
-    ? pick(mic2Pool,'Microphone 2','A')
-    : pick(persons.microphone.filter(n=>n!==mic1),'Microphone 2','A');
+  const mic1 = pick(persons.microphone,'Microphone 1','A');
+  let mic2Pool = persons.microphone.filter(n=>n!==mic1&&!usedToday.has(n));
+  if(mic2Pool.length===0) mic2Pool = persons.microphone.filter(n=>n!==mic1);
+  const mic2 = pick(mic2Pool,'Microphone 2','A');
 
   // ── Meeting-type specific ──
   let lastPrayer='', stage1='', stage2='', chairman='', wtReading='';
 
   if(isWeekend){
+    // Weekend: 1 stage person, + last prayer, chairman, WT reading (Group B)
     stage1     = pick(persons.stage,'Stage','A');
     lastPrayer = pick(persons.lastPrayer,'Last Prayer','B');
     chairman   = pick(persons.chairman,'Chairman','B');
     wtReading  = pick(persons.wtReading,'WT Reading','B');
   } else {
+    // Midweek: 2 stage persons, no Group B
     stage1 = pick(persons.stage,'Stage 1','A');
-    const s2Pool=persons.stage.filter(n=>n!==stage1&&!usedToday.has(n));
-    stage2 = s2Pool.length>0
-      ? pick(s2Pool,'Stage 2','A')
-      : pick(persons.stage.filter(n=>n!==stage1),'Stage 2','A');
+    let s2Pool = persons.stage.filter(n=>n!==stage1&&!usedToday.has(n));
+    if(s2Pool.length===0) s2Pool = persons.stage.filter(n=>n!==stage1);
+    stage2 = pick(s2Pool,'Stage 2','A');
   }
 
   return {date,type,hall,door,parking,lastPrayer,avTech:avTechPerson,av:avPerson,stage1,stage2,mic1,mic2,chairman,wtReading};
 }
 
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
 // RENDER TABLE
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
 function renderTable(weekendName, midweekName){
   const tbody=document.getElementById('scheduleBody');
   tbody.innerHTML='';
@@ -741,77 +707,79 @@ function renderTable(weekendName, midweekName){
   });
 }
 
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
 // STATS
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
 function renderStats(){
   const el=document.getElementById('statsContent');
-  const entries=Object.entries(assignmentStats).filter(([,s])=>(s.groupATotal||0)+(s.groupBTotal||0)>0);
+  const entries=Object.entries(assignmentStats).filter(([,s])=>Object.keys(s.catTotal||{}).length>0);
   if(!entries.length){ el.textContent='No data yet.'; return; }
 
-  // Sort by total (A+B) descending
-  entries.sort((a,b)=>((b[1].groupATotal||0)+(b[1].groupBTotal||0))-((a[1].groupATotal||0)+(a[1].groupBTotal||0)));
-
-  // Build per-category table
-  const allCats=['Hall Attendant','Door Attendant','Parking','AV Tech','AV','Stage 1','Stage 2','Microphone 1','Microphone 2','Last Prayer','Chairman','WT Reading'];
-  const groupBCats=['Last Prayer','Chairman','WT Reading'];
+  // Sort by total assignments descending
+  entries.sort((a,b)=>{
+    const ta=Object.values(a[1].catTotal||{}).reduce((s,v)=>s+v,0);
+    const tb=Object.values(b[1].catTotal||{}).reduce((s,v)=>s+v,0);
+    return tb-ta;
+  });
 
   let html=`<div style="font-size:.82rem;color:var(--text2);margin-bottom:14px">
-    Sorted by total assignments. <b style="color:var(--accent)">Group B</b> (Last Prayer / Chairman / WT Reading) 
-    uses its own fairness counter — equal distribution is enforced independently.
+    Fairness is enforced <b>per category</b>: each person's turn count for each specific role is tracked independently.
+    Last Prayer, Chairman, and WT Reading are in Group B — a person can hold one Group A + one Group B per week.
   </div>`;
 
-  // Summary table
   html+=`<div style="overflow-x:auto;margin-bottom:20px">
-  <table style="border-collapse:collapse;font-size:.75rem;width:100%;min-width:600px">
+  <table style="border-collapse:collapse;font-size:.75rem;width:100%;min-width:700px">
   <thead><tr style="background:var(--accent);color:white">
     <th style="padding:6px 8px;text-align:left;font-weight:600">Person</th>
-    <th style="padding:6px 8px" title="Group A total">Group A</th>
-    <th style="padding:6px 8px" title="Group B total">Group B</th>
+    <th style="padding:6px 8px">Total</th>
     <th style="padding:6px 8px">Last Prayer</th>
     <th style="padding:6px 8px">Chairman</th>
     <th style="padding:6px 8px">WT Reading</th>
     <th style="padding:6px 8px">Hall</th>
     <th style="padding:6px 8px">Door</th>
     <th style="padding:6px 8px">Parking</th>
+    <th style="padding:6px 8px">AV Tech</th>
     <th style="padding:6px 8px">AV</th>
     <th style="padding:6px 8px">Stage</th>
     <th style="padding:6px 8px">Mic</th>
   </tr></thead><tbody>`;
 
   entries.forEach(([name,s],i)=>{
-    const ch=s.catHistory||{};
-    const gA=s.groupATotal||0, gB=s.groupBTotal||0;
+    const ch=s.catTotal||{};
+    const total=Object.values(ch).reduce((sum,v)=>sum+v,0);
     const bg=i%2===0?'var(--surface)':'var(--gold-light)';
+    const lp=ch['Last Prayer']||0, chm=ch['Chairman']||0, wt=ch['WT Reading']||0;
+    const lpStyle=lp>0?'color:var(--accent);font-weight:600':'';
+    const chmStyle=chm>0?'color:var(--accent);font-weight:600':'';
+    const wtStyle=wt>0?'color:var(--accent);font-weight:600':'';
     html+=`<tr style="background:${bg}">
       <td style="padding:5px 8px;font-weight:600;border:1px solid var(--border)">${name}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${gA}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);color:var(--accent);font-weight:600">${gB}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Last Prayer']||[]).length||0}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Chairman']||[]).length||0}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['WT Reading']||[]).length||0}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Hall Attendant']||[]).length||0}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Door Attendant']||[]).length||0}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Parking']||[]).length||0}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${((ch['AV Tech']||[]).length||0)+((ch['AV']||[]).length||0)}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${((ch['Stage 1']||[]).length||0)+((ch['Stage']||[]).length||0)+((ch['Stage 2']||[]).length||0)}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${((ch['Microphone 1']||[]).length||0)+((ch['Microphone 2']||[]).length||0)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);font-weight:700">${total}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);${lpStyle}">${lp}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);${chmStyle}">${chm}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);${wtStyle}">${wt}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${ch['Hall Attendant']||0}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${ch['Door Attendant']||0}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${ch['Parking']||0}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${ch['AV Tech']||0}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${ch['AV']||0}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Stage']||0)+(ch['Stage 1']||0)+(ch['Stage 2']||0)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Microphone 1']||0)+(ch['Microphone 2']||0)}</td>
     </tr>`;
   });
   html+=`</tbody></table></div>`;
   el.innerHTML=html;
 }
 
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
 // EXPORT HELPERS
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
 function getSchedulePeriod(){
   if(!schedule.length) return '';
   const f=schedule[0].date, l=schedule[schedule.length-1].date;
   if(f.getMonth()===l.getMonth()&&f.getFullYear()===l.getFullYear()) return formatDateLabel(f);
   return formatDateLabel(f)+' – '+formatDateLabel(l);
 }
-
 function getWeekendName(){
   const v=parseInt(document.querySelector('input[name="weekend"]:checked')?.value??'0');
   return getDayName(v);
@@ -851,12 +819,12 @@ function exportPDF(){
 
   doc.autoTable({
     startY:28,
-    head:[['Date','Hall\nAttendant','Door\nAttendant','Parking','Last Prayer','Audio Video','Stage','Microphone','Chairman','WT Reading']],
+    head:[['Date','Hall\nAttendant','Door\nAttendant','Parking','Last\nPrayer','Audio\nVideo','Stage','Microphone','Chairman','WT\nReading']],
     body:rows,
     styles:{fontSize:7.5,cellPadding:3,valign:'top',overflow:'linebreak'},
     headStyles:{fillColor:[139,26,26],textColor:255,fontStyle:'bold',fontSize:7.5},
     alternateRowStyles:{fillColor:[245,240,224]},
-    columnStyles:{0:{cellWidth:24},4:{cellWidth:18},8:{cellWidth:20},9:{cellWidth:20}}
+    columnStyles:{0:{cellWidth:26},4:{cellWidth:18},8:{cellWidth:20},9:{cellWidth:20}}
   });
   doc.save(`DutiesSchedule_${cong.replace(/\s+/g,'_')}.pdf`);
 }
@@ -902,44 +870,43 @@ function exportWord(){
   a.click(); URL.revokeObjectURL(url);
 }
 
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
 // TEMPLATE DOWNLOAD
-// ─────────────────────────────────────────────
+// Headers match exactly what the parser expects.
+// "AV Technical" is the column name used in the actual Excel sample.
+// ═══════════════════════════════════════════════════════
 function downloadTemplate(){
   const wb=XLSX.utils.book_new();
-  const headers=['Hall Attendant','Door Attendant','Parking','Last Prayer','Audio Video Technical Person','Audio Video','Stage','Microphone','Chairman','WT Reading'];
+  const headers=[
+    'Hall Attendant','Door Attendant','Parking','Last Prayer',
+    'AV Technical','Audio Video','Stage','Microphone','Chairman','WT Reading'
+  ];
   const data=[
-    ['James K M',  'James K M',  'James K M',  'James K M',   'Joyal Bijoy',   'Paul T C',      'Paul T C',    'Paul T C',    'James K M',  'James K M'],
-    ['Renju Kurian','Renju Kurian','Renju Kurian','Renju Kurian','Johnson Baby',  'Kenez T Robin', 'Kenez T Robin','Kenez T Robin','Renju Kurian','Renju Kurian'],
-    ['Ebin K Baby', 'Ebin K Baby', 'Ebin K Baby', 'Ebin K Baby', 'Paulson Baby',  'Robin T P',     'Robin T P',   'Robin T P',   'Ebin K Baby','Ebin K Baby'],
-    ['Joseph A S',  'Joseph A S',  'Joseph A S',  'Joseph A S',  'Roshan Joseph', 'Alphin Alex',   'Alphin Alex', 'Alphin Alex', 'Joseph A S', 'Phipson Joseph'],
-    ['Phipson Joseph','Phipson Joseph','Phipson Joseph','Phipson Joseph','Alex Baby','Alex Baby','Alex Baby','','Phipson Joseph','Paulson Baby'],
-    ['Paulson Baby','Paulson Baby','Paulson Baby','',            '',              'Albern Joseph', 'Albern Joseph','Albern Joseph','',           'Johnson Baby'],
-    ['Rajesh K',    'Rajesh K',    'Rajesh K',    '',            '',              'Bijoy Enas',    'Bijoy Enas',  '',            '',            'Joyal Bijoy'],
-    ['',            '',            '',            '',            '',              'Joyal Bijoy',   'Joyal Bijoy', 'Paulson Baby','',            'Paul T C'],
-    ['',            '',            '',            '',            '',              'Johnson Baby',  '',            'Johnson Baby','',            'Rajesh K'],
-    ['',            '',            '',            '',            '',              'Roshan Joseph', '',            'Joyal Bijoy', '',            ''],
-    ['',            '',            '',            '',            '',              '',              '',            'Paul T C',    '',            ''],
+    ['James K M',     'James K M',     'James K M',     'James K M',     'Joyal Bijoy',   'Paul T C',      'Paul T C',    'Paul T C',      'James K M',   'James K M'],
+    ['Renju Kurian',  'Renju Kurian',  'Renju Kurian',  'Renju Kurian',  'Johnson Baby',  'Kenez T Robin', 'Kenez T Robin','Kenez T Robin','Renju Kurian','Renju Kurian'],
+    ['Ebin K Baby',   'Ebin K Baby',   'Ebin K Baby',   'Ebin K Baby',   'Paulson Baby',  'Robin T P',     'Robin T P',   'Robin T P',     'Ebin K Baby', 'Ebin K Baby'],
+    ['Joseph A S',    'Joseph A S',    'Joseph A S',    'Joseph A S',    'Roshan Joseph', 'Alphin Alex',   'Alphin Alex', 'Alphin Alex',   'Joseph A S',  'Phipson Joseph'],
+    ['Phipson Joseph','Phipson Joseph','Phipson Joseph','Phipson Joseph','Alex Baby',     'Alex Baby',     'Alex Baby',   'Alex Baby',     'Phipson Joseph','Paulson Baby'],
+    ['Paulson Baby',  'Paulson Baby',  'Paulson Baby',  'Paulson Baby',  '',              'Albern Joseph', 'Albern Joseph','Albern Joseph','Paulson Baby','Johnson Baby'],
+    ['Rajesh K',      'Rajesh K',      'Rajesh K',      'Joyal Bijoy',   '',              'Bijoy Enas',    'Bijoy Enas',  'Bijoy Enas',    'Joyal Bijoy', 'Joyal Bijoy'],
+    ['Padmakumar M',  'Padmakumar M',  'Padmakumar M',  'Paul T C',      '',              'Joyal Bijoy',   'Joyal Bijoy', 'Joyal Bijoy',   'Paul T C',    'Paul T C'],
+    ['',              '',              '',              'Renju Kurian',  '',              'Johnson Baby',  'Johnson Baby','Johnson Baby',  'Rajesh K',    'Rajesh K'],
+    ['',              '',              '',              '',              '',              'Roshan Joseph', 'Paulson Baby','Paulson Baby',  '',            ''],
+    ['',              '',              '',              '',              '',              '',              'Roshan Joseph','Roshan Joseph','',            ''],
   ];
   const ws=XLSX.utils.aoa_to_sheet([headers,...data]);
-  ws['!cols']=headers.map(()=>({wch:24}));
-  // Bold header row
-  const range=XLSX.utils.decode_range(ws['!ref']);
-  for(let c=range.s.c;c<=range.e.c;c++){
-    const cell=ws[XLSX.utils.encode_cell({r:0,c})];
-    if(cell) cell.s={font:{bold:true},fill:{fgColor:{rgb:'8B1A1A'}},alignment:{horizontal:'center'}};
-  }
+  ws['!cols']=headers.map(()=>({wch:22}));
   XLSX.utils.book_append_sheet(wb,ws,'Eligible Persons');
   XLSX.writeFile(wb,'AssignmentEligibility_Template.xlsx');
 }
 
-// ─────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════
 function regenerate(){ if(lastConfig) generateSchedule(); }
 function showUploadError(m){ const e=document.getElementById('uploadError'); e.textContent='⚠ '+m; e.style.display='block'; }
 function hideError(){ document.getElementById('uploadError').style.display='none'; }
-function showWarn(m){ const e=document.getElementById('uploadWarn'); e.textContent='⚑ '+m; e.style.display='block'; }
+function showWarn(m){ const e=document.getElementById('uploadWarn'); e.innerHTML='⚑ '+m; e.style.display='block'; }
 function showConfigError(m){ const e=document.getElementById('configError'); e.textContent='⚠ '+m; e.style.display='block'; }
 function hideConfigError(){ document.getElementById('configError').style.display='none'; }
 function showSchedWarn(h){ const e=document.getElementById('schedWarn'); e.innerHTML='⚑ '+h; e.style.display='block'; }
@@ -953,11 +920,10 @@ function toggleDark(){
   document.body.classList.toggle('dark');
   document.querySelector('.dark-toggle').textContent=document.body.classList.contains('dark')?'☀ Light':'🌙 Dark';
 }
-function formatDateLabel(d){ return d.toLocaleDateString('en-US',{month:'long',year:'numeric'}); }
 
-// ─────────────────────────────────────────────
-// INIT
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
+// INIT — default dates to current month
+// ═══════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded',()=>{
   const now=new Date();
   const y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0');
