@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting Duties Scheduler</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #f7f5f0;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #d8d2c6;
+    --text: #1a1612;
+    --text2: #5a534a;
+    --accent: #8b1a1a;
+    --accent2: #c0392b;
+    --gold: #b8860b;
+    --gold-light: #f5f0e0;
+    --success: #2d6a2d;
+    --warn: #7a4f00;
+    --radius: 6px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--accent);
+    color: white;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(139,26,26,0.3);
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .header-title {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .header-sub {
+    font-size: 0.72rem;
+    opacity: 0.75;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 1px;
+  }
+  .dark-toggle {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .dark-toggle:hover { background: rgba(255,255,255,0.25); }
+
+  /* LAYOUT */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--gold-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title svg { flex-shrink: 0; }
+
+  /* UPLOAD ZONE */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface2);
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--gold-light); }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .upload-text { font-size: 1rem; color: var(--text2); }
+  .upload-hint { font-size: 0.78rem; color: var(--text2); margin-top: 6px; }
+  .upload-success {
+    margin-top: 12px;
+    padding: 10px 16px;
+    background: #e8f5e9;
+    border: 1px solid #81c784;
+    border-radius: var(--radius);
+    color: var(--success);
+    font-size: 0.88rem;
+    display: none;
+  }
+
+  /* FORM GRID */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text2);
+    margin-bottom: 6px;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+
+  /* CHECKBOXES */
+  .check-group { display: flex; gap: 20px; flex-wrap: wrap; }
+  .check-label {
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; font-size: 0.92rem;
+  }
+  .check-label input[type=checkbox], .check-label input[type=radio] {
+    width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer;
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 2px 8px rgba(139,26,26,0.25);
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-export {
+    background: var(--gold);
+    color: white;
+    font-size: 0.85rem;
+    padding: 8px 16px;
+  }
+  .btn-export:hover { background: #9a700a; }
+  .btn-export.green { background: var(--success); }
+  .btn-export.green:hover { background: #215221; }
+  .btn-export.blue { background: #1565c0; }
+  .btn-export.blue:hover { background: #0d47a1; }
+
+  .btn-row {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    margin-top: 16px;
+  }
+
+  /* ALERTS */
+  .alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 0.88rem;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .alert-warn { background: #fff8e1; border: 1px solid #ffe082; color: var(--warn); }
+  .alert-error { background: #ffebee; border: 1px solid #ef9a9a; color: #b71c1c; }
+  .alert-info { background: #e3f2fd; border: 1px solid #90caf9; color: #0d47a1; }
+
+  /* SCHEDULE TABLE */
+  .schedule-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  #scheduleTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    min-width: 820px;
+  }
+  #scheduleTable thead tr {
+    background: var(--accent);
+    color: white;
+  }
+  #scheduleTable th {
+    padding: 10px 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(255,255,255,0.15);
+    white-space: nowrap;
+  }
+  #scheduleTable th:first-child { text-align: left; }
+  #scheduleTable td {
+    padding: 10px 8px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+  #scheduleTable td:first-child {
+    font-weight: 600;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    min-width: 90px;
+    background: var(--surface2);
+  }
+  #scheduleTable tbody tr:nth-child(even) td { background: var(--gold-light); }
+  #scheduleTable tbody tr:nth-child(even) td:first-child { background: #ebe6d6; }
+  #scheduleTable tbody tr:hover td { background: #ffe8e8 !important; }
+  .date-day { font-size: 0.7rem; color: var(--text2); font-weight: 400; }
+  .cell-name { display: block; }
+  .cell-name + .cell-name { margin-top: 2px; }
+
+  /* EDITABLE CELLS */
+  td[contenteditable=true] { cursor: text; outline: none; }
+  td[contenteditable=true]:focus { box-shadow: inset 0 0 0 2px var(--accent); background: #fff9f9 !important; }
+
+  /* PRINT HEADER */
+  .print-header {
+    display: none;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .print-header h2 { font-family: 'Crimson Pro', serif; font-size: 1.6rem; }
+  .print-header h3 { color: var(--accent); font-size: 1.2rem; }
+
+  /* STATS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 0.8rem;
+  }
+  .stat-name { font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .stat-count { color: var(--accent); font-size: 1.1rem; font-weight: 700; font-family: 'Crimson Pro', serif; }
+
+  /* DARK MODE */
+  body.dark {
+    --bg: #0f0d0b;
+    --surface: #1a1714;
+    --surface2: #231f1b;
+    --border: #3a342e;
+    --text: #e8e4de;
+    --text2: #9a8f83;
+    --gold-light: #2a2418;
+  }
+  body.dark .upload-zone { background: var(--surface2); }
+  body.dark #scheduleTable tbody tr:nth-child(even) td { background: #221e18; }
+  body.dark #scheduleTable tbody tr:nth-child(even) td:first-child { background: #1e1a15; }
+  body.dark #scheduleTable td:first-child { background: var(--surface2); }
+
+  /* SECTION TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab {
+    padding: 8px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    transition: all 0.2s;
+  }
+  .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* SPINNER */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .header-title { font-size: 1.1rem; }
+    .card { padding: 16px; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* PRINT */
+  @media print {
+    header, .card:not(#previewCard), .tabs, .btn-row { display: none !important; }
+    .main { padding: 0; max-width: 100%; }
+    #previewCard { border: none; box-shadow: none; padding: 0; }
+    .print-header { display: block; }
+    #scheduleTable { font-size: 9pt; min-width: unset; }
+    #scheduleTable th { background: #8b1a1a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .schedule-wrap { border: none; overflow: visible; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="header-title">✦ Meeting Duties Scheduler</div>
+      <div class="header-sub">Congregation Assignment Generator</div>
+    </div>
+    <button class="dark-toggle" onclick="toggleDark()">🌙 Dark</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('setup')">⚙ Setup</div>
+    <div class="tab" onclick="switchTab('preview')" id="previewTab">📋 Schedule</div>
+    <div class="tab" onclick="switchTab('stats')" id="statsTab">📊 Stats</div>
+  </div>
+
+  <!-- SETUP TAB -->
+  <div class="tab-content active" id="tab-setup">
+
+    <!-- UPLOAD -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Assignment List
+      </div>
+      <div class="upload-zone" id="uploadZone" ondragover="ev(event)" ondrop="drop(event)">
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.docx" onchange="handleFile(this.files[0])">
+        <div class="upload-icon">📂</div>
+        <div class="upload-text">Drag & drop or tap to select file</div>
+        <div class="upload-hint">Supports Excel (.xlsx) and Word (.docx) — <a href="#" onclick="downloadTemplate();return false;" style="color:var(--accent);font-weight:600">Download template ↓</a></div>
+      </div>
+      <div class="upload-success" id="uploadSuccess"></div>
+      <div class="alert alert-error" id="uploadError"></div>
+      <div class="alert alert-warn" id="uploadWarn"></div>
+
+      <!-- Manual entry fallback -->
+      <div style="margin-top:16px;">
+        <button class="btn btn-secondary" style="font-size:0.82rem" onclick="toggleManual()">📝 Enter names manually instead</button>
+      </div>
+      <div id="manualEntry" style="display:none; margin-top:16px;">
+        <div style="font-size:0.82rem; color:var(--text2); margin-bottom:10px;">Enter names comma-separated per role.</div>
+        <div class="form-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px,1fr));">
+          <div class="form-group"><label>Hall Attendant</label><input type="text" id="m_hall" placeholder="Name1, Name2..."></div>
+          <div class="form-group"><label>Door Attendant</label><input type="text" id="m_door" placeholder="Name1, Name2..."></div>
+          <div class="form-group"><label>Parking</label><input type="text" id="m_parking" placeholder="Name1, Name2..."></div>
+          <div class="form-group"><label>Last Prayer</label><input type="text" id="m_prayer" placeholder="Name1, Name2..."></div>
+          <div class="form-group"><label>AV Technical Person</label><input type="text" id="m_avtech" placeholder="Name1, Name2..."></div>
+          <div class="form-group"><label>Audio Video</label><input type="text" id="m_av" placeholder="Name1, Name2..."></div>
+          <div class="form-group"><label>Stage</label><input type="text" id="m_stage" placeholder="Name1, Name2..."></div>
+          <div class="form-group"><label>Microphone</label><input type="text" id="m_mic" placeholder="Name1, Name2..."></div>
+          <div class="form-group"><label>Chairman</label><input type="text" id="m_chairman" placeholder="Name1, Name2..."></div>
+          <div class="form-group"><label>WT Reading</label><input type="text" id="m_wt" placeholder="Name1, Name2..."></div>
+        </div>
+        <button class="btn btn-secondary" onclick="loadManual()">✓ Use These Names</button>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M1 12h2M21 12h2M12 1v2M12 21v2"/></svg>
+        Schedule Configuration
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Congregation Name</label>
+          <input type="text" id="congName" value="KOLENCHERY NORTH" placeholder="Your congregation">
+        </div>
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" id="startDate">
+        </div>
+        <div class="form-group">
+          <label>End Date</label>
+          <input type="date" id="endDate">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Weekend Meeting Day <span style="font-weight:400;text-transform:none;font-size:0.78rem;color:var(--text2)">(pick one)</span></label>
+        <div class="check-group" style="margin-bottom:12px;">
+          <label class="check-label"><input type="radio" name="weekend" value="6"> Saturday</label>
+          <label class="check-label"><input type="radio" name="weekend" value="0" checked> Sunday</label>
+        </div>
+        <label>Midweek Meeting Day <span style="font-weight:400;text-transform:none;font-size:0.78rem;color:var(--text2)">(pick one)</span></label>
+        <div class="check-group">
+          <label class="check-label"><input type="radio" name="midweek" value="1"> Monday</label>
+          <label class="check-label"><input type="radio" name="midweek" value="2"> Tuesday</label>
+          <label class="check-label"><input type="radio" name="midweek" value="3" checked> Wednesday</label>
+          <label class="check-label"><input type="radio" name="midweek" value="4"> Thursday</label>
+          <label class="check-label"><input type="radio" name="midweek" value="5"> Friday</label>
+        </div>
+      </div>
+      <div class="alert alert-error" id="configError"></div>
+      <button class="btn btn-primary" onclick="generateSchedule()" id="genBtn">
+        ✦ Generate Schedule
+      </button>
+    </div>
+  </div>
+
+  <!-- PREVIEW TAB -->
+  <div class="tab-content" id="tab-preview">
+    <div class="card" id="previewCard">
+      <div class="card-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Generated Schedule
+        <span style="margin-left:auto; font-size:0.75rem; font-weight:400; color:var(--text2);">Tap cells to edit</span>
+      </div>
+      <div class="alert alert-warn" id="schedWarn"></div>
+      <div class="print-header">
+        <h2 id="printCong">CONGREGATION</h2>
+        <h3 id="printPeriod"></h3>
+        <p style="font-size:0.85rem; margin-top:4px;">Duties Schedule</p>
+      </div>
+      <div class="schedule-wrap">
+        <table id="scheduleTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Hall<br>Attendant</th>
+              <th>Door<br>Attendant</th>
+              <th>Parking</th>
+              <th>Last Prayer</th>
+              <th>Audio Video</th>
+              <th>Stage</th>
+              <th>Microphone</th>
+              <th>Chairman</th>
+              <th>WT Reading</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody">
+            <tr><td colspan="10" style="text-align:center; padding:40px; color:var(--text2);">Generate a schedule to see it here</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-export" onclick="exportPDF()">⬇ PDF</button>
+        <button class="btn btn-export green" onclick="exportExcel()">⬇ Excel</button>
+        <button class="btn btn-export blue" onclick="exportWord()">⬇ Word</button>
+        <button class="btn btn-secondary" onclick="window.print()" style="font-size:0.85rem">🖨 Print</button>
+        <button class="btn btn-secondary" onclick="regenerate()" style="font-size:0.85rem">🔁 Regenerate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS TAB -->
+  <div class="tab-content" id="tab-stats">
+    <div class="card">
+      <div class="card-title">📊 Assignment Statistics</div>
+      <div id="statsContent" style="color:var(--text2); font-size:0.9rem;">Generate a schedule first to see statistics.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+let persons = {
+  hallAttendant: [],
+  doorAttendant: [],
+  parking: [],
+  lastPrayer: [],
+  avTech: [],          // Audio Video Technical Person
+  av: [],              // Audio Video (regular operator)
+  stage: [],
+  microphone: [],
+  chairman: [],
+  wtReading: []
+};
+
+let schedule = [];
+let assignmentStats = {};
+let lastConfig = null;
+
+// ============================================================
+// FILE UPLOAD
+// ============================================================
+function ev(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag'); }
+function drop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag');
+  handleFile(e.dataTransfer.files[0]);
+}
+
+function handleFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'xlsx' || ext === 'xls') parseExcel(file);
+  else if (ext === 'docx') parseDOCX(file);
+  else if (ext === 'pdf') showUploadError('PDF is not supported for the eligibility list — PDF text extraction cannot reliably parse column data. Please upload the Excel (.xlsx) or Word (.docx) template instead.');
+  else showUploadError('Unsupported file type. Please use Excel (.xlsx) or Word (.docx).');
+}
+
+function parseExcel(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      loadFromMatrix(data);
+    } catch(ex) { showUploadError('Could not parse Excel: ' + ex.message); }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// PDF not supported for eligibility list — parseDOCX uses mammoth text fallback below
+
+function parseDOCX(file) {
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+  script.onload = () => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      mammoth.extractRawText({ arrayBuffer: e.target.result }).then(result => {
+        parsePDFText(result.value);
+      }).catch(ex => showUploadError('Could not parse Word file: ' + ex.message));
+    };
+    reader.readAsArrayBuffer(file);
+  };
+  document.head.appendChild(script);
+}
+
+// ============================================================
+// COLUMN MAP for Excel / matrix parsing
+// ============================================================
+const COL_MAP = [
+  { match: /audio video technical/i, key: 'avTech' },
+  { match: /av technical/i,          key: 'avTech' },
+  { match: /technical person/i,      key: 'avTech' },
+  { match: /hall attendant/i,        key: 'hallAttendant' },
+  { match: /door attendant/i,        key: 'doorAttendant' },
+  { match: /parking/i,               key: 'parking' },
+  { match: /last prayer/i,           key: 'lastPrayer' },
+  { match: /audio video/i,           key: 'av' },
+  { match: /\bstage\b/i,             key: 'stage' },
+  { match: /microphone/i,            key: 'microphone' },
+  { match: /chairman/i,              key: 'chairman' },
+  { match: /wt reading/i,            key: 'wtReading' },
+  { match: /watchtower/i,            key: 'wtReading' },
+];
+
+function matchCol(header) {
+  const h = String(header).trim();
+  for (const col of COL_MAP) {
+    if (col.match.test(h)) return col.key;
+  }
+  return null;
+}
+
+function loadFromMatrix(data) {
+  // Find header row (scan first 6 rows)
+  let headerRow = -1;
+  for (let r = 0; r < Math.min(data.length, 6); r++) {
+    if (data[r].some(c => /hall|door|parking|audio|stage|microphone/i.test(String(c)))) {
+      headerRow = r; break;
+    }
+  }
+  if (headerRow < 0) {
+    showUploadError('Could not detect column headers. Make sure row 1 has names like "Hall Attendant", "Audio Video", etc.');
+    return;
+  }
+
+  const headers = data[headerRow].map(h => String(h));
+  const cols = headers.map(h => matchCol(h));
+
+  for (const k in persons) persons[k] = [];
+
+  for (let r = headerRow + 1; r < data.length; r++) {
+    data[r].forEach((cell, c) => {
+      const key = cols[c];
+      if (!key) return;
+      const name = String(cell).trim();
+      if (name && name !== '' && !persons[key].includes(name)) {
+        persons[key].push(name);
+      }
+    });
+  }
+
+  finalizeLoad();
+}
+
+function finalizeLoad() {
+  const warnings = [];
+  if (persons.hallAttendant.length < 2) warnings.push('Hall Attendant: very few people');
+  if (persons.avTech.length < 1)        warnings.push('AV Technical Person: none found — check column name in file');
+  if (persons.av.length < 1)            warnings.push('Audio Video: none found');
+
+  const total = Object.values(persons).reduce((s, a) => s + a.length, 0);
+  if (total === 0) { showUploadError('No names found. Check the file format.'); return; }
+
+  // Show breakdown
+  const breakdown = Object.entries(persons)
+    .filter(([, v]) => v.length > 0)
+    .map(([k, v]) => `${k.replace(/([A-Z])/g,' $1').trim()}: ${v.length}`)
+    .join(' | ');
+
+  document.getElementById('uploadSuccess').style.display = 'block';
+  document.getElementById('uploadSuccess').innerHTML =
+    `✓ Loaded ${total} name entries across ${Object.values(persons).filter(a=>a.length>0).length} categories.<br>
+     <small style="opacity:0.8">${breakdown}</small>`;
+
+  if (warnings.length) showWarn(warnings.join(' | '));
+  hideError();
+}
+
+function loadManual() {
+  const fields = {
+    hallAttendant: 'm_hall', doorAttendant: 'm_door', parking: 'm_parking',
+    lastPrayer: 'm_prayer', avTech: 'm_avtech', av: 'm_av',
+    stage: 'm_stage', microphone: 'm_mic', chairman: 'm_chairman', wtReading: 'm_wt'
+  };
+  for (const [k, id] of Object.entries(fields)) {
+    const val = document.getElementById(id).value;
+    persons[k] = val.split(',').map(n => n.trim()).filter(Boolean);
+  }
+  finalizeLoad();
+}
+
+function toggleManual() {
+  const el = document.getElementById('manualEntry');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ============================================================
+// SCHEDULE GENERATION
+// ============================================================
+function generateSchedule() {
+  const cong     = document.getElementById('congName').value.trim() || 'CONGREGATION';
+  const startVal = document.getElementById('startDate').value;
+  const endVal   = document.getElementById('endDate').value;
+
+  const weekendDay = parseInt(document.querySelector('input[name="weekend"]:checked')?.value ?? '0');
+  const midweekDay = parseInt(document.querySelector('input[name="midweek"]:checked')?.value ?? '3');
+
+  if (!startVal || !endVal) { showConfigError('Please select start and end dates.'); return; }
+  const start = new Date(startVal + 'T00:00:00');
+  const end   = new Date(endVal   + 'T00:00:00');
+  if (end < start) { showConfigError('End date must be after start date.'); return; }
+
+  const totalNames = Object.values(persons).reduce((s,a) => s + a.length, 0);
+  if (totalNames === 0) {
+    showConfigError('No names loaded. Please upload your assignment list file first.');
+    return;
+  }
+
+  hideConfigError();
+
+  // Build meeting dates
+  const meetingDates = [];
+  const cur = new Date(start);
+  while (cur <= end) {
+    const day = cur.getDay();
+    if (day === weekendDay) meetingDates.push({ date: new Date(cur), type: 'Weekend' });
+    else if (day === midweekDay) meetingDates.push({ date: new Date(cur), type: 'Midweek' });
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  if (meetingDates.length === 0) {
+    showConfigError('No meeting days found in selected date range.'); return;
+  }
+
+  // Initialise per-person stats
+  assignmentStats = {};
+  const allNames = new Set(Object.values(persons).flat());
+  allNames.forEach(n => {
+    assignmentStats[n] = { total: 0, last: null, categories: {}, lastWeek: null };
+  });
+
+  const warnings = [];
+  schedule = meetingDates.map(({ date, type }) => buildRow(date, type, warnings));
+
+  lastConfig = { cong, startVal, endVal, weekendDay, midweekDay };
+
+  renderTable(cong);
+  renderStats();
+
+  if (warnings.length) {
+    showSchedWarn([...new Set(warnings)].slice(0, 6).join('<br>'));
+  } else {
+    document.getElementById('schedWarn').style.display = 'none';
+  }
+
+  document.getElementById('printCong').textContent   = cong;
+  document.getElementById('printPeriod').textContent = formatDateLabel(start) + (
+    start.getMonth() !== end.getMonth() || start.getFullYear() !== end.getFullYear()
+      ? ' – ' + formatDateLabel(end) : '');
+
+  switchTab('preview');
+}
+
+// ============================================================
+// ISO WEEK KEY
+// ============================================================
+function isoWeekKey(d) {
+  const tmp = new Date(d.getTime());
+  tmp.setHours(0, 0, 0, 0);
+  tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
+  const yearStart = new Date(tmp.getFullYear(), 0, 1);
+  const wk = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
+  return `${tmp.getFullYear()}-${String(wk).padStart(2, '0')}`;
+}
+
+// ============================================================
+// BUILD ROW
+// ============================================================
+function buildRow(date, type, warnings) {
+  const isWeekend = type === 'Weekend';
+  const weekKey   = isoWeekKey(date);
+
+  // Track who has already been assigned on THIS DAY (hard — never assign twice same day)
+  const usedToday = new Set();
+
+  /**
+   * pick(pool, label)
+   * Selects the best available person from `pool`.
+   *
+   * Rules (in order of priority):
+   *  1. Never pick someone already used TODAY (hard rule — skip if pool exhausted)
+   *  2. Prefer someone not yet assigned THIS WEEK (soft rule — fall back if needed)
+   *  3. Among eligible: prefer fewest total assignments, then longest gap
+   *  4. Pick randomly among the top equal tier (max 3) for variety
+   *
+   * IMPORTANT: only adds a real name to usedToday — never '—'
+   */
+  const pick = (pool, label) => {
+    if (!pool || pool.length === 0) {
+      warnings.push(`No people listed for "${label}"`);
+      return '—';
+    }
+
+    // Step 1: prefer not used today
+    let candidates = pool.filter(n => !usedToday.has(n));
+    if (candidates.length === 0) {
+      // Everyone in this pool is already assigned today — must reuse (warn)
+      warnings.push(`⚠ Pool too small for "${label}" on ${fmtDate(date)} — same-day repeat`);
+      candidates = [...pool];
+    }
+
+    // Step 2: prefer not used this week (soft)
+    const notThisWeek = candidates.filter(n => assignmentStats[n]?.lastWeek !== weekKey);
+    if (notThisWeek.length > 0) {
+      candidates = notThisWeek;
+    } else {
+      warnings.push(`ℹ All candidates for "${label}" already assigned this week on ${fmtDate(date)}`);
+      // keep full candidates list — at least try to pick least-assigned
+    }
+
+    // Step 3: sort by fairness
+    candidates.sort((a, b) => {
+      const sa = assignmentStats[a] || { total: 0, last: null };
+      const sb = assignmentStats[b] || { total: 0, last: null };
+      if (sa.total !== sb.total) return sa.total - sb.total;
+      const ga = sa.last ? (date - sa.last) : Infinity;
+      const gb = sb.last ? (date - sb.last) : Infinity;
+      return gb - ga;
+    });
+
+    // Step 4: random among top tier
+    const minTotal = (assignmentStats[candidates[0]] || { total: 0 }).total;
+    const topTier  = candidates.filter(n => (assignmentStats[n]?.total ?? 0) <= minTotal + 1);
+    const chosen   = topTier[Math.floor(Math.random() * Math.min(topTier.length, 3))];
+
+    // Record
+    usedToday.add(chosen);                                    // only real names added
+    if (!assignmentStats[chosen])
+      assignmentStats[chosen] = { total: 0, last: null, categories: {}, lastWeek: null };
+    assignmentStats[chosen].total++;
+    assignmentStats[chosen].last     = date;
+    assignmentStats[chosen].lastWeek = weekKey;
+    assignmentStats[chosen].categories[label] =
+      (assignmentStats[chosen].categories[label] || 0) + 1;
+
+    return chosen;
+  };
+
+  // --- Common assignments (both Weekend and Midweek) ---
+  const hall    = pick(persons.hallAttendant, 'Hall Attendant');
+  const door    = pick(persons.doorAttendant, 'Door Attendant');
+  const parking = pick(persons.parking,       'Parking');
+
+  // AV: one from avTech + one from av (different people)
+  const avTechPerson = pick(persons.avTech, 'AV Tech');
+  // For AV regular, exclude avTechPerson AND anyone already used today
+  const avPool = persons.av.filter(n => n !== avTechPerson && !usedToday.has(n));
+  const avPerson = avPool.length > 0
+    ? pick(avPool, 'AV')
+    : pick(persons.av.filter(n => n !== avTechPerson), 'AV');
+
+  // Microphone: 2 different people
+  const mic1     = pick(persons.microphone, 'Microphone 1');
+  const mic2Pool = persons.microphone.filter(n => n !== mic1 && !usedToday.has(n));
+  const mic2     = mic2Pool.length > 0
+    ? pick(mic2Pool, 'Microphone 2')
+    : pick(persons.microphone.filter(n => n !== mic1), 'Microphone 2');
+
+  // --- Meeting-type-specific assignments ---
+  let lastPrayer = '', stage1 = '', stage2 = '', chairman = '', wtReading = '';
+
+  if (isWeekend) {
+    lastPrayer = pick(persons.lastPrayer, 'Last Prayer');
+    stage1     = pick(persons.stage,      'Stage');
+    chairman   = pick(persons.chairman,   'Chairman');
+    wtReading  = pick(persons.wtReading,  'WT Reading');
+  } else {
+    // Midweek: 2 stage persons, no Last Prayer / Chairman / WT Reading
+    stage1 = pick(persons.stage, 'Stage 1');
+    const stage2Pool = persons.stage.filter(n => n !== stage1 && !usedToday.has(n));
+    stage2 = stage2Pool.length > 0
+      ? pick(stage2Pool, 'Stage 2')
+      : pick(persons.stage.filter(n => n !== stage1), 'Stage 2');
+  }
+
+  return { date, type, hall, door, parking, lastPrayer, avTech: avTechPerson, av: avPerson, stage1, stage2, mic1, mic2, chairman, wtReading };
+}
+
+// ============================================================
+// RENDER TABLE
+// ============================================================
+function renderTable(cong) {
+  const tbody = document.getElementById('scheduleBody');
+  tbody.innerHTML = '';
+
+  schedule.forEach(row => {
+    const tr = document.createElement('tr');
+    const isWeekend = row.type === 'Weekend';
+    tr.innerHTML = `
+      <td><strong>${fmtDate(row.date)}</strong><br><span class="date-day">${row.type}</span></td>
+      <td contenteditable="true">${row.hall}</td>
+      <td contenteditable="true">${row.door}</td>
+      <td contenteditable="true">${row.parking}</td>
+      <td contenteditable="true">${isWeekend ? row.lastPrayer : ''}</td>
+      <td contenteditable="true">${row.avTech}<br>${row.av}</td>
+      <td contenteditable="true">${row.stage1}${row.stage2 ? '<br>' + row.stage2 : ''}</td>
+      <td contenteditable="true">${row.mic1}<br>${row.mic2}</td>
+      <td contenteditable="true">${isWeekend ? row.chairman : ''}</td>
+      <td contenteditable="true">${isWeekend ? row.wtReading : ''}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ============================================================
+// STATS
+// ============================================================
+function renderStats() {
+  const el = document.getElementById('statsContent');
+  const sorted = Object.entries(assignmentStats)
+    .filter(([, s]) => s.total > 0)
+    .sort((a, b) => b[1].total - a[1].total);
+
+  if (sorted.length === 0) { el.textContent = 'No data yet.'; return; }
+
+  let html = `<div style="margin-bottom:12px;font-size:0.85rem;color:var(--text2)">Total assignments per person:</div><div class="stats-grid">`;
+  sorted.forEach(([name, s]) => {
+    const cats = Object.entries(s.categories).map(([k,v]) => `${k}: ${v}`).join(', ');
+    html += `<div class="stat-card">
+      <div class="stat-name">${name}</div>
+      <div class="stat-count">${s.total} <span style="font-size:0.7rem;color:var(--text2)">total</span></div>
+      <div style="font-size:0.7rem;color:var(--text2);margin-top:3px">${cats}</div>
+    </div>`;
+  });
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc  = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const cong = document.getElementById('congName').value || 'CONGREGATION';
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text('Duties Schedule', 14, 14);
+  doc.text(cong, doc.internal.pageSize.width - 14, 14, { align: 'right' });
+
+  doc.setFontSize(12);
+  doc.setTextColor(180, 30, 30);
+  doc.text(getSchedulePeriod(), doc.internal.pageSize.width / 2, 22, { align: 'center' });
+  doc.setTextColor(0, 0, 0);
+
+  const rows = schedule.map(r => {
+    const w = r.type === 'Weekend';
+    return [
+      fmtDate(r.date) + '\n' + r.type,
+      r.hall, r.door, r.parking,
+      w ? r.lastPrayer : '',
+      r.avTech + '\n' + r.av,
+      r.stage1 + (r.stage2 ? '\n' + r.stage2 : ''),
+      r.mic1 + '\n' + r.mic2,
+      w ? r.chairman : '',
+      w ? r.wtReading : ''
+    ];
+  });
+
+  doc.autoTable({
+    startY: 28,
+    head: [['Date','Hall\nAttendant','Door\nAttendant','Parking','Last Prayer','Audio Video','Stage','Microphone','Chairman','WT Reading']],
+    body: rows,
+    styles: { fontSize: 7.5, cellPadding: 3, valign: 'top', overflow: 'linebreak' },
+    headStyles: { fillColor: [139, 26, 26], textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
+    alternateRowStyles: { fillColor: [245, 240, 224] },
+    columnStyles: { 0: { cellWidth: 22 }, 4: { cellWidth: 18 }, 8: { cellWidth: 20 }, 9: { cellWidth: 20 } }
+  });
+
+  doc.save(`DutiesSchedule_${cong.replace(/\s+/g,'_')}.pdf`);
+}
+
+function exportExcel() {
+  const wb   = XLSX.utils.book_new();
+  const cong = document.getElementById('congName').value || 'CONGREGATION';
+
+  const header = ['Date','Type','Hall Attendant','Door Attendant','Parking','Last Prayer','AV Tech','AV','Stage 1','Stage 2','Mic 1','Mic 2','Chairman','WT Reading'];
+  const rows   = schedule.map(r => {
+    const w = r.type === 'Weekend';
+    return [fmtDate(r.date), r.type, r.hall, r.door, r.parking,
+      w ? r.lastPrayer : '', r.avTech, r.av,
+      r.stage1, r.stage2 || '', r.mic1, r.mic2,
+      w ? r.chairman : '', w ? r.wtReading : ''];
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet([
+    [cong], ['Duties Schedule – ' + getSchedulePeriod()], [], header, ...rows
+  ]);
+  XLSX.utils.book_append_sheet(wb, ws, 'Schedule');
+  XLSX.writeFile(wb, `DutiesSchedule_${cong.replace(/\s+/g,'_')}.xlsx`);
+}
+
+function exportWord() {
+  const cong    = document.getElementById('congName').value || 'CONGREGATION';
+  const tableEl = document.getElementById('scheduleTable');
+  const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
+    xmlns:w='urn:schemas-microsoft-com:office:word'>
+  <head><meta charset="UTF-8">
+  <style>
+    body{font-family:Calibri,sans-serif;font-size:10pt}
+    h1{font-size:15pt} h2{color:#8b1a1a;font-size:13pt;text-align:center}
+    table{border-collapse:collapse;width:100%}
+    th{background:#8b1a1a;color:white;padding:5px;font-size:9pt;border:1px solid #ccc}
+    td{padding:4px 6px;border:1px solid #ccc;font-size:9pt;vertical-align:top}
+    tr:nth-child(even) td{background:#f5f0e0}
+  </style></head>
+  <body>
+    <h1>Duties Schedule &nbsp;&nbsp;&nbsp; ${cong}</h1>
+    <h2>${getSchedulePeriod()}</h2>
+    ${tableEl.outerHTML}
+  </body></html>`;
+
+  const blob = new Blob([html], { type: 'application/msword' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `DutiesSchedule_${cong.replace(/\s+/g,'_')}.doc`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function fmtDate(d) {
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+function formatDateLabel(d) {
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+function getSchedulePeriod() {
+  if (!schedule.length) return '';
+  const f = schedule[0].date, l = schedule[schedule.length-1].date;
+  if (f.getMonth() === l.getMonth() && f.getFullYear() === l.getFullYear())
+    return formatDateLabel(f);
+  return formatDateLabel(f) + ' – ' + formatDateLabel(l);
+}
+function regenerate() { if (lastConfig) generateSchedule(); }
+
+function showUploadError(msg) {
+  const el = document.getElementById('uploadError');
+  el.textContent = '⚠ ' + msg; el.style.display = 'block';
+}
+function hideError() { document.getElementById('uploadError').style.display = 'none'; }
+function showWarn(msg) {
+  const el = document.getElementById('uploadWarn');
+  el.textContent = '⚑ ' + msg; el.style.display = 'block';
+}
+function showConfigError(msg) {
+  const el = document.getElementById('configError');
+  el.textContent = '⚠ ' + msg; el.style.display = 'block';
+}
+function hideConfigError() { document.getElementById('configError').style.display = 'none'; }
+function showSchedWarn(html) {
+  const el = document.getElementById('schedWarn');
+  el.innerHTML = '⚑ ' + html; el.style.display = 'block';
+}
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab')[['setup','preview','stats'].indexOf(name)].classList.add('active');
+}
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  document.querySelector('.dark-toggle').textContent =
+    document.body.classList.contains('dark') ? '☀ Light' : '🌙 Dark';
+}
+
+// ============================================================
+// TEMPLATE DOWNLOAD
+// ============================================================
+function downloadTemplate() {
+  const wb = XLSX.utils.book_new();
+
+  // Headers matching the exact column names the parser expects
+  const headers = [
+    'Hall Attendant',
+    'Door Attendant',
+    'Parking',
+    'Last Prayer',
+    'Audio Video Technical Person',
+    'Audio Video',
+    'Stage',
+    'Microphone',
+    'Chairman',
+    'WT Reading'
+  ];
+
+  // Sample rows showing the format
+  const sample = [
+    ['Name 1','Name 1','Name 1','Name 1','Name A','Name A','Name A','Name A','Name 1','Name 1'],
+    ['Name 2','Name 2','Name 2','Name 2','Name B','Name B','Name B','Name B','Name 2','Name 2'],
+    ['Name 3','Name 3','Name 3','Name 3','Name C','Name C','Name C','Name C','Name 3','Name 3'],
+    ['Name 4','Name 4','Name 4','',       '',       'Name D','Name D','Name D','Name 4','Name 4'],
+    ['Name 5','Name 5','Name 5','',       '',       'Name E','Name E','Name E','Name 5','Name 5'],
+    ['',       '',       '',      '',       '',       'Name F','Name F','Name F','',       'Name 6'],
+    ['',       '',       '',      '',       '',       'Name G','Name G','',      '',       'Name 7'],
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sample]);
+
+  // Column widths
+  ws['!cols'] = headers.map(() => ({ wch: 22 }));
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Eligible Persons');
+  XLSX.writeFile(wb, 'AssignmentEligibility_Template.xlsx');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  const now  = new Date();
+  const y    = now.getFullYear();
+  const m    = String(now.getMonth()+1).padStart(2,'0');
+  const last = new Date(y, now.getMonth()+1, 0).getDate();
+  document.getElementById('startDate').value = `${y}-${m}-01`;
+  document.getElementById('endDate').value   = `${y}-${m}-${String(last).padStart(2,'0')}`;
+});
+</script>
+</body>
+</html>
