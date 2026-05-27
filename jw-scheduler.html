@@ -8,374 +8,134 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
 
   :root {
-    --bg: #f7f5f0;
-    --surface: #ffffff;
-    --surface2: #f0ede6;
-    --border: #d8d2c6;
-    --text: #1a1612;
-    --text2: #5a534a;
-    --accent: #8b1a1a;
-    --accent2: #c0392b;
-    --gold: #b8860b;
-    --gold-light: #f5f0e0;
-    --success: #2d6a2d;
-    --warn: #7a4f00;
-    --radius: 6px;
-    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --bg:#f7f5f0; --surface:#fff; --surface2:#f0ede6; --border:#d8d2c6;
+    --text:#1a1612; --text2:#5a534a; --accent:#8b1a1a; --accent2:#c0392b;
+    --gold:#b8860b; --gold-light:#f5f0e0; --success:#2d6a2d; --warn:#7a4f00;
+    --radius:6px; --shadow:0 2px 12px rgba(0,0,0,0.08);
   }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  header{background:var(--accent);color:white;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(139,26,26,.3)}
+  .header-inner{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .header-title{font-family:'Crimson Pro',serif;font-size:1.5rem;font-weight:600;letter-spacing:.02em}
+  .header-sub{font-size:.72rem;opacity:.75;text-transform:uppercase;letter-spacing:.1em;margin-top:1px}
+  .dark-toggle{background:rgba(255,255,255,.15);border:none;color:white;padding:6px 12px;border-radius:20px;cursor:pointer;font-size:.8rem;font-family:'DM Sans',sans-serif;transition:background .2s;white-space:nowrap}
+  .dark-toggle:hover{background:rgba(255,255,255,.25)}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 15px;
-    line-height: 1.6;
-  }
+  .main{max-width:1200px;margin:0 auto;padding:24px 16px 60px}
 
-  /* HEADER */
-  header {
-    background: var(--accent);
-    color: white;
-    padding: 0;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 16px rgba(139,26,26,0.3);
-  }
-  .header-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .header-title {
-    font-family: 'Crimson Pro', serif;
-    font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-  }
-  .header-sub {
-    font-size: 0.72rem;
-    opacity: 0.75;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-top: 1px;
-  }
-  .dark-toggle {
-    background: rgba(255,255,255,0.15);
-    border: none;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-family: 'DM Sans', sans-serif;
-    transition: background 0.2s;
-    white-space: nowrap;
-  }
-  .dark-toggle:hover { background: rgba(255,255,255,0.25); }
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:20px}
+  .card-title{font-family:'Crimson Pro',serif;font-size:1.2rem;font-weight:600;color:var(--accent);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--gold-light);display:flex;align-items:center;gap:8px}
 
-  /* LAYOUT */
-  .main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 24px 16px 60px;
-  }
+  /* UPLOAD */
+  .upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);position:relative}
+  .upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--gold-light)}
+  .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+  .upload-icon{font-size:2.5rem;margin-bottom:10px}
+  .upload-text{font-size:1rem;color:var(--text2)}
+  .upload-hint{font-size:.78rem;color:var(--text2);margin-top:6px}
+  .upload-success{margin-top:12px;padding:10px 16px;background:#e8f5e9;border:1px solid #81c784;border-radius:var(--radius);color:var(--success);font-size:.88rem;display:none}
 
-  /* CARD */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 24px;
-    margin-bottom: 20px;
-  }
-  .card-title {
-    font-family: 'Crimson Pro', serif;
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--accent);
-    margin-bottom: 16px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--gold-light);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .card-title svg { flex-shrink: 0; }
+  /* FORM */
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:16px}
+  .form-group label{display:block;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:6px}
+  .form-group input,.form-group select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none;transition:border-color .2s;-webkit-appearance:none}
+  .form-group input:focus,.form-group select:focus{border-color:var(--accent)}
 
-  /* UPLOAD ZONE */
-  .upload-zone {
-    border: 2px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 36px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: var(--surface2);
-    position: relative;
+  /* CUSTOM CHECKBOX/RADIO TOGGLE PILLS */
+  .day-group{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .day-pill{position:relative}
+  .day-pill input{position:absolute;opacity:0;width:0;height:0}
+  .day-pill label{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:7px 14px;border-radius:20px;cursor:pointer;
+    font-size:.88rem;font-weight:500;
+    border:1.5px solid var(--border);
+    background:var(--surface2);color:var(--text2);
+    transition:all .18s;user-select:none;
   }
-  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--gold-light); }
-  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-  .upload-icon { font-size: 2.5rem; margin-bottom: 10px; }
-  .upload-text { font-size: 1rem; color: var(--text2); }
-  .upload-hint { font-size: 0.78rem; color: var(--text2); margin-top: 6px; }
-  .upload-success {
-    margin-top: 12px;
-    padding: 10px 16px;
-    background: #e8f5e9;
-    border: 1px solid #81c784;
-    border-radius: var(--radius);
-    color: var(--success);
-    font-size: 0.88rem;
-    display: none;
+  .day-pill label .tick{display:none;font-size:.9rem}
+  .day-pill input:checked + label{
+    background:var(--accent);color:white;border-color:var(--accent);
+    box-shadow:0 2px 8px rgba(139,26,26,.25);
   }
-
-  /* FORM GRID */
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-  .form-group label {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text2);
-    margin-bottom: 6px;
-  }
-  .form-group input, .form-group select {
-    width: 100%;
-    padding: 9px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.92rem;
-    outline: none;
-    transition: border-color 0.2s;
-    -webkit-appearance: none;
-  }
-  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
-
-  /* CHECKBOXES */
-  .check-group { display: flex; gap: 20px; flex-wrap: wrap; }
-  .check-label {
-    display: flex; align-items: center; gap: 8px;
-    cursor: pointer; font-size: 0.92rem;
-  }
-  .check-label input[type=checkbox], .check-label input[type=radio] {
-    width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer;
-  }
+  .day-pill input:checked + label .tick{display:inline}
+  .day-pill input:disabled + label{opacity:.4;cursor:not-allowed}
 
   /* BUTTONS */
-  .btn {
-    padding: 10px 22px;
-    border: none;
-    border-radius: var(--radius);
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    text-decoration: none;
-  }
-  .btn-primary {
-    background: var(--accent);
-    color: white;
-    box-shadow: 0 2px 8px rgba(139,26,26,0.25);
-  }
-  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
-  .btn-secondary {
-    background: var(--surface2);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .btn-secondary:hover { background: var(--border); }
-  .btn-export {
-    background: var(--gold);
-    color: white;
-    font-size: 0.85rem;
-    padding: 8px 16px;
-  }
-  .btn-export:hover { background: #9a700a; }
-  .btn-export.green { background: var(--success); }
-  .btn-export.green:hover { background: #215221; }
-  .btn-export.blue { background: #1565c0; }
-  .btn-export.blue:hover { background: #0d47a1; }
-
-  .btn-row {
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
-    margin-top: 16px;
-  }
+  .btn{padding:10px 22px;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:7px;text-decoration:none}
+  .btn-primary{background:var(--accent);color:white;box-shadow:0 2px 8px rgba(139,26,26,.25)}
+  .btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+  .btn-secondary:hover{background:var(--border)}
+  .btn-export{background:var(--gold);color:white;font-size:.85rem;padding:8px 16px}
+  .btn-export:hover{background:#9a700a}
+  .btn-export.green{background:var(--success)}.btn-export.green:hover{background:#215221}
+  .btn-export.blue{background:#1565c0}.btn-export.blue:hover{background:#0d47a1}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
 
   /* ALERTS */
-  .alert {
-    padding: 12px 16px;
-    border-radius: var(--radius);
-    font-size: 0.88rem;
-    margin-bottom: 16px;
-    display: none;
-  }
-  .alert-warn { background: #fff8e1; border: 1px solid #ffe082; color: var(--warn); }
-  .alert-error { background: #ffebee; border: 1px solid #ef9a9a; color: #b71c1c; }
-  .alert-info { background: #e3f2fd; border: 1px solid #90caf9; color: #0d47a1; }
+  .alert{padding:12px 16px;border-radius:var(--radius);font-size:.88rem;margin-bottom:16px;display:none}
+  .alert-warn{background:#fff8e1;border:1px solid #ffe082;color:var(--warn)}
+  .alert-error{background:#ffebee;border:1px solid #ef9a9a;color:#b71c1c}
 
-  /* SCHEDULE TABLE */
-  .schedule-wrap {
-    overflow-x: auto;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-  }
-  #scheduleTable {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.82rem;
-    min-width: 820px;
-  }
-  #scheduleTable thead tr {
-    background: var(--accent);
-    color: white;
-  }
-  #scheduleTable th {
-    padding: 10px 8px;
-    text-align: center;
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border: 1px solid rgba(255,255,255,0.15);
-    white-space: nowrap;
-  }
-  #scheduleTable th:first-child { text-align: left; }
-  #scheduleTable td {
-    padding: 10px 8px;
-    border: 1px solid var(--border);
-    vertical-align: top;
-    font-size: 0.8rem;
-    line-height: 1.4;
-  }
-  #scheduleTable td:first-child {
-    font-weight: 600;
-    font-size: 0.78rem;
-    white-space: nowrap;
-    min-width: 90px;
-    background: var(--surface2);
-  }
-  #scheduleTable tbody tr:nth-child(even) td { background: var(--gold-light); }
-  #scheduleTable tbody tr:nth-child(even) td:first-child { background: #ebe6d6; }
-  #scheduleTable tbody tr:hover td { background: #ffe8e8 !important; }
-  .date-day { font-size: 0.7rem; color: var(--text2); font-weight: 400; }
-  .cell-name { display: block; }
-  .cell-name + .cell-name { margin-top: 2px; }
-
-  /* EDITABLE CELLS */
-  td[contenteditable=true] { cursor: text; outline: none; }
-  td[contenteditable=true]:focus { box-shadow: inset 0 0 0 2px var(--accent); background: #fff9f9 !important; }
+  /* TABLE */
+  .schedule-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+  #scheduleTable{width:100%;border-collapse:collapse;font-size:.82rem;min-width:860px}
+  #scheduleTable thead tr{background:var(--accent);color:white}
+  #scheduleTable th{padding:10px 8px;text-align:center;font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;border:1px solid rgba(255,255,255,.15);white-space:nowrap}
+  #scheduleTable th:first-child{text-align:left}
+  #scheduleTable td{padding:10px 8px;border:1px solid var(--border);vertical-align:top;font-size:.8rem;line-height:1.4}
+  #scheduleTable td:first-child{font-weight:600;font-size:.78rem;white-space:nowrap;min-width:100px;background:var(--surface2)}
+  #scheduleTable tbody tr:nth-child(even) td{background:var(--gold-light)}
+  #scheduleTable tbody tr:nth-child(even) td:first-child{background:#ebe6d6}
+  #scheduleTable tbody tr:hover td{background:#ffe8e8!important}
+  .date-day{font-size:.7rem;color:var(--text2);font-weight:400}
+  td[contenteditable=true]{cursor:text;outline:none}
+  td[contenteditable=true]:focus{box-shadow:inset 0 0 0 2px var(--accent);background:#fff9f9!important}
 
   /* PRINT HEADER */
-  .print-header {
-    display: none;
-    text-align: center;
-    margin-bottom: 20px;
-  }
-  .print-header h2 { font-family: 'Crimson Pro', serif; font-size: 1.6rem; }
-  .print-header h3 { color: var(--accent); font-size: 1.2rem; }
+  .print-header{display:none;text-align:center;margin-bottom:20px}
+  .print-header h2{font-family:'Crimson Pro',serif;font-size:1.6rem}
+  .print-header h3{color:var(--accent);font-size:1.2rem}
 
   /* STATS */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 10px;
-    margin-top: 10px;
-  }
-  .stat-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 14px;
-    font-size: 0.8rem;
-  }
-  .stat-name { font-weight: 600; color: var(--text); margin-bottom: 3px; }
-  .stat-count { color: var(--accent); font-size: 1.1rem; font-weight: 700; font-family: 'Crimson Pro', serif; }
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+  .stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-size:.8rem}
+  .stat-name{font-weight:600;color:var(--text);margin-bottom:3px}
+  .stat-count{color:var(--accent);font-size:1.1rem;font-weight:700;font-family:'Crimson Pro',serif}
 
-  /* DARK MODE */
-  body.dark {
-    --bg: #0f0d0b;
-    --surface: #1a1714;
-    --surface2: #231f1b;
-    --border: #3a342e;
-    --text: #e8e4de;
-    --text2: #9a8f83;
-    --gold-light: #2a2418;
-  }
-  body.dark .upload-zone { background: var(--surface2); }
-  body.dark #scheduleTable tbody tr:nth-child(even) td { background: #221e18; }
-  body.dark #scheduleTable tbody tr:nth-child(even) td:first-child { background: #1e1a15; }
-  body.dark #scheduleTable td:first-child { background: var(--surface2); }
+  /* DARK */
+  body.dark{--bg:#0f0d0b;--surface:#1a1714;--surface2:#231f1b;--border:#3a342e;--text:#e8e4de;--text2:#9a8f83;--gold-light:#2a2418}
+  body.dark .upload-zone{background:var(--surface2)}
+  body.dark #scheduleTable tbody tr:nth-child(even) td{background:#221e18}
+  body.dark #scheduleTable tbody tr:nth-child(even) td:first-child{background:#1e1a15}
+  body.dark #scheduleTable td:first-child{background:var(--surface2)}
 
-  /* SECTION TABS */
-  .tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
-  .tab {
-    padding: 8px 18px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text2);
-    transition: all 0.2s;
-  }
-  .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
+  /* TABS */
+  .tabs{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap}
+  .tab{padding:8px 18px;border-radius:20px;cursor:pointer;font-size:.85rem;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:all .2s}
+  .tab.active{background:var(--accent);color:white;border-color:var(--accent)}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
 
-  /* SPINNER */
-  .spinner {
-    display: inline-block;
-    width: 16px; height: 16px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    vertical-align: middle;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  /* SECTION DIVIDER */
+  .section-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:8px;margin-top:4px}
 
-  /* RESPONSIVE */
-  @media (max-width: 600px) {
-    .header-title { font-size: 1.1rem; }
-    .card { padding: 16px; }
-    .form-grid { grid-template-columns: 1fr 1fr; }
-  }
+  @media(max-width:600px){.header-title{font-size:1.1rem}.card{padding:16px}.form-grid{grid-template-columns:1fr 1fr}}
 
-  /* PRINT */
-  @media print {
-    header, .card:not(#previewCard), .tabs, .btn-row { display: none !important; }
-    .main { padding: 0; max-width: 100%; }
-    #previewCard { border: none; box-shadow: none; padding: 0; }
-    .print-header { display: block; }
-    #scheduleTable { font-size: 9pt; min-width: unset; }
-    #scheduleTable th { background: #8b1a1a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .schedule-wrap { border: none; overflow: visible; }
+  @media print{
+    header,.card:not(#previewCard),.tabs,.btn-row{display:none!important}
+    .main{padding:0;max-width:100%}
+    #previewCard{border:none;box-shadow:none;padding:0}
+    .print-header{display:block}
+    #scheduleTable{font-size:9pt;min-width:unset}
+    #scheduleTable th{background:#8b1a1a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .schedule-wrap{border:none;overflow:visible}
   }
 </style>
 </head>
@@ -392,18 +152,15 @@
 </header>
 
 <div class="main">
-
-  <!-- TABS -->
   <div class="tabs">
     <div class="tab active" onclick="switchTab('setup')">⚙ Setup</div>
-    <div class="tab" onclick="switchTab('preview')" id="previewTab">📋 Schedule</div>
-    <div class="tab" onclick="switchTab('stats')" id="statsTab">📊 Stats</div>
+    <div class="tab" onclick="switchTab('preview')">📋 Schedule</div>
+    <div class="tab" onclick="switchTab('stats')">📊 Stats</div>
   </div>
 
-  <!-- SETUP TAB -->
+  <!-- SETUP -->
   <div class="tab-content active" id="tab-setup">
 
-    <!-- UPLOAD -->
     <div class="card">
       <div class="card-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -412,20 +169,22 @@
       <div class="upload-zone" id="uploadZone" ondragover="ev(event)" ondrop="drop(event)">
         <input type="file" id="fileInput" accept=".xlsx,.xls,.docx" onchange="handleFile(this.files[0])">
         <div class="upload-icon">📂</div>
-        <div class="upload-text">Drag & drop or tap to select file</div>
-        <div class="upload-hint">Supports Excel (.xlsx) and Word (.docx) — <a href="#" onclick="downloadTemplate();return false;" style="color:var(--accent);font-weight:600">Download template ↓</a></div>
+        <div class="upload-text">Drag &amp; drop or tap to select file</div>
+        <div class="upload-hint">Excel (.xlsx) or Word (.docx) only</div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn btn-secondary" style="font-size:.82rem" onclick="downloadTemplate()">📥 Download Excel Template</button>
       </div>
       <div class="upload-success" id="uploadSuccess"></div>
       <div class="alert alert-error" id="uploadError"></div>
       <div class="alert alert-warn" id="uploadWarn"></div>
 
-      <!-- Manual entry fallback -->
-      <div style="margin-top:16px;">
-        <button class="btn btn-secondary" style="font-size:0.82rem" onclick="toggleManual()">📝 Enter names manually instead</button>
+      <div style="margin-top:12px">
+        <button class="btn btn-secondary" style="font-size:.82rem" onclick="toggleManual()">📝 Enter names manually</button>
       </div>
-      <div id="manualEntry" style="display:none; margin-top:16px;">
-        <div style="font-size:0.82rem; color:var(--text2); margin-bottom:10px;">Enter names comma-separated per role.</div>
-        <div class="form-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px,1fr));">
+      <div id="manualEntry" style="display:none;margin-top:14px">
+        <div style="font-size:.82rem;color:var(--text2);margin-bottom:10px">Enter names comma-separated per role.</div>
+        <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
           <div class="form-group"><label>Hall Attendant</label><input type="text" id="m_hall" placeholder="Name1, Name2..."></div>
           <div class="form-group"><label>Door Attendant</label><input type="text" id="m_door" placeholder="Name1, Name2..."></div>
           <div class="form-group"><label>Parking</label><input type="text" id="m_parking" placeholder="Name1, Name2..."></div>
@@ -441,7 +200,6 @@
       </div>
     </div>
 
-    <!-- CONFIG -->
     <div class="card">
       <div class="card-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M1 12h2M21 12h2M12 1v2M12 21v2"/></svg>
@@ -461,41 +219,67 @@
           <input type="date" id="endDate">
         </div>
       </div>
-      <div class="form-group" style="margin-bottom:16px;">
-        <label>Weekend Meeting Day <span style="font-weight:400;text-transform:none;font-size:0.78rem;color:var(--text2)">(pick one)</span></label>
-        <div class="check-group" style="margin-bottom:12px;">
-          <label class="check-label"><input type="radio" name="weekend" value="6"> Saturday</label>
-          <label class="check-label"><input type="radio" name="weekend" value="0" checked> Sunday</label>
-        </div>
-        <label>Midweek Meeting Day <span style="font-weight:400;text-transform:none;font-size:0.78rem;color:var(--text2)">(pick one)</span></label>
-        <div class="check-group">
-          <label class="check-label"><input type="radio" name="midweek" value="1"> Monday</label>
-          <label class="check-label"><input type="radio" name="midweek" value="2"> Tuesday</label>
-          <label class="check-label"><input type="radio" name="midweek" value="3" checked> Wednesday</label>
-          <label class="check-label"><input type="radio" name="midweek" value="4"> Thursday</label>
-          <label class="check-label"><input type="radio" name="midweek" value="5"> Friday</label>
+
+      <!-- WEEKEND DAY SELECTOR -->
+      <div style="margin-bottom:18px">
+        <div class="section-label">Weekend Meeting Day <span style="font-weight:400;font-size:.75rem;text-transform:none">(select one)</span></div>
+        <div class="day-group">
+          <div class="day-pill">
+            <input type="radio" name="weekend" id="we_sat" value="6" onchange="syncDaySelectors()">
+            <label for="we_sat"><span class="tick">✓</span> Saturday</label>
+          </div>
+          <div class="day-pill">
+            <input type="radio" name="weekend" id="we_sun" value="0" checked onchange="syncDaySelectors()">
+            <label for="we_sun"><span class="tick">✓</span> Sunday</label>
+          </div>
         </div>
       </div>
+
+      <!-- MIDWEEK DAY SELECTOR -->
+      <div style="margin-bottom:18px">
+        <div class="section-label">Midweek Meeting Day <span style="font-weight:400;font-size:.75rem;text-transform:none">(select one)</span></div>
+        <div class="day-group">
+          <div class="day-pill">
+            <input type="radio" name="midweek" id="mw_mon" value="1" onchange="syncDaySelectors()">
+            <label for="mw_mon"><span class="tick">✓</span> Monday</label>
+          </div>
+          <div class="day-pill">
+            <input type="radio" name="midweek" id="mw_tue" value="2" onchange="syncDaySelectors()">
+            <label for="mw_tue"><span class="tick">✓</span> Tuesday</label>
+          </div>
+          <div class="day-pill">
+            <input type="radio" name="midweek" id="mw_wed" value="3" checked onchange="syncDaySelectors()">
+            <label for="mw_wed"><span class="tick">✓</span> Wednesday</label>
+          </div>
+          <div class="day-pill">
+            <input type="radio" name="midweek" id="mw_thu" value="4" onchange="syncDaySelectors()">
+            <label for="mw_thu"><span class="tick">✓</span> Thursday</label>
+          </div>
+          <div class="day-pill">
+            <input type="radio" name="midweek" id="mw_fri" value="5" onchange="syncDaySelectors()">
+            <label for="mw_fri"><span class="tick">✓</span> Friday</label>
+          </div>
+        </div>
+      </div>
+
       <div class="alert alert-error" id="configError"></div>
-      <button class="btn btn-primary" onclick="generateSchedule()" id="genBtn">
-        ✦ Generate Schedule
-      </button>
+      <button class="btn btn-primary" onclick="generateSchedule()">✦ Generate Schedule</button>
     </div>
   </div>
 
-  <!-- PREVIEW TAB -->
+  <!-- PREVIEW -->
   <div class="tab-content" id="tab-preview">
     <div class="card" id="previewCard">
       <div class="card-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
         Generated Schedule
-        <span style="margin-left:auto; font-size:0.75rem; font-weight:400; color:var(--text2);">Tap cells to edit</span>
+        <span style="margin-left:auto;font-size:.75rem;font-weight:400;color:var(--text2)">Tap cells to edit</span>
       </div>
       <div class="alert alert-warn" id="schedWarn"></div>
       <div class="print-header">
         <h2 id="printCong">CONGREGATION</h2>
         <h3 id="printPeriod"></h3>
-        <p style="font-size:0.85rem; margin-top:4px;">Duties Schedule</p>
+        <p style="font-size:.85rem;margin-top:4px">Duties Schedule</p>
       </div>
       <div class="schedule-wrap">
         <table id="scheduleTable">
@@ -514,7 +298,7 @@
             </tr>
           </thead>
           <tbody id="scheduleBody">
-            <tr><td colspan="10" style="text-align:center; padding:40px; color:var(--text2);">Generate a schedule to see it here</td></tr>
+            <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text2)">Generate a schedule to see it here</td></tr>
           </tbody>
         </table>
       </div>
@@ -522,507 +306,583 @@
         <button class="btn btn-export" onclick="exportPDF()">⬇ PDF</button>
         <button class="btn btn-export green" onclick="exportExcel()">⬇ Excel</button>
         <button class="btn btn-export blue" onclick="exportWord()">⬇ Word</button>
-        <button class="btn btn-secondary" onclick="window.print()" style="font-size:0.85rem">🖨 Print</button>
-        <button class="btn btn-secondary" onclick="regenerate()" style="font-size:0.85rem">🔁 Regenerate</button>
+        <button class="btn btn-secondary" onclick="window.print()" style="font-size:.85rem">🖨 Print</button>
+        <button class="btn btn-secondary" onclick="regenerate()" style="font-size:.85rem">🔁 Regenerate</button>
       </div>
     </div>
   </div>
 
-  <!-- STATS TAB -->
+  <!-- STATS -->
   <div class="tab-content" id="tab-stats">
     <div class="card">
       <div class="card-title">📊 Assignment Statistics</div>
-      <div id="statsContent" style="color:var(--text2); font-size:0.9rem;">Generate a schedule first to see statistics.</div>
+      <div id="statsContent" style="color:var(--text2);font-size:.9rem">Generate a schedule first to see statistics.</div>
     </div>
   </div>
-
 </div>
 
 <script>
-// ============================================================
+// ─────────────────────────────────────────────
 // DATA
-// ============================================================
+// ─────────────────────────────────────────────
 let persons = {
-  hallAttendant: [],
-  doorAttendant: [],
-  parking: [],
-  lastPrayer: [],
-  avTech: [],          // Audio Video Technical Person
-  av: [],              // Audio Video (regular operator)
-  stage: [],
-  microphone: [],
-  chairman: [],
-  wtReading: []
+  hallAttendant:[], doorAttendant:[], parking:[], lastPrayer:[],
+  avTech:[], av:[], stage:[], microphone:[], chairman:[], wtReading:[]
 };
-
 let schedule = [];
 let assignmentStats = {};
 let lastConfig = null;
 
-// ============================================================
-// FILE UPLOAD
-// ============================================================
-function ev(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag'); }
-function drop(e) {
+// ─────────────────────────────────────────────
+// ASSIGNMENT GROUPS
+// GROUP A (operational): hall, door, parking, AV, stage, microphone
+// GROUP B (platform):    lastPrayer, chairman, wtReading
+//
+// Rules:
+//   • Max ONE Group A assignment per person per week
+//   • Max ONE Group B assignment per person per week
+//   • A person CAN hold one Group A + one Group B in the same week
+//   • Fairness within each group uses its own counter (groupATotal / groupBTotal)
+//     so AV-heavy people don't crowd out Group B slots and vice versa
+//   • Across Group B categories, a shared "groupBTotal" ensures Joyal/Paulson/Johnson
+//     get equal Chairman/WT Reading turns alongside Ebin/James/etc.
+//   • Same category: avoid repeat within last 3 meetings (soft), never consecutive (hard-soft)
+// ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+// UPLOAD
+// ─────────────────────────────────────────────
+function ev(e){ e.preventDefault(); document.getElementById('uploadZone').classList.add('drag'); }
+function drop(e){
   e.preventDefault();
   document.getElementById('uploadZone').classList.remove('drag');
   handleFile(e.dataTransfer.files[0]);
 }
-
-function handleFile(file) {
-  if (!file) return;
+function handleFile(file){
+  if(!file) return;
   const ext = file.name.split('.').pop().toLowerCase();
-  if (ext === 'xlsx' || ext === 'xls') parseExcel(file);
-  else if (ext === 'docx') parseDOCX(file);
-  else if (ext === 'pdf') showUploadError('PDF is not supported for the eligibility list — PDF text extraction cannot reliably parse column data. Please upload the Excel (.xlsx) or Word (.docx) template instead.');
+  if(ext==='xlsx'||ext==='xls') parseExcel(file);
+  else if(ext==='docx') parseDOCX(file);
+  else if(ext==='pdf') showUploadError('PDF is not supported for the eligibility list. Please use the Excel (.xlsx) template.');
   else showUploadError('Unsupported file type. Please use Excel (.xlsx) or Word (.docx).');
 }
 
-function parseExcel(file) {
+function parseExcel(file){
   const reader = new FileReader();
   reader.onload = e => {
-    try {
-      const wb = XLSX.read(e.target.result, { type: 'binary' });
+    try{
+      const wb = XLSX.read(e.target.result,{type:'binary'});
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      const data = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
       loadFromMatrix(data);
-    } catch(ex) { showUploadError('Could not parse Excel: ' + ex.message); }
+    } catch(ex){ showUploadError('Could not parse Excel: '+ex.message); }
   };
   reader.readAsBinaryString(file);
 }
 
-// PDF not supported for eligibility list — parseDOCX uses mammoth text fallback below
-
-function parseDOCX(file) {
-  const script = document.createElement('script');
-  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
-  script.onload = () => {
+function parseDOCX(file){
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+  s.onload = () => {
     const reader = new FileReader();
     reader.onload = e => {
-      mammoth.extractRawText({ arrayBuffer: e.target.result }).then(result => {
-        parsePDFText(result.value);
-      }).catch(ex => showUploadError('Could not parse Word file: ' + ex.message));
+      mammoth.extractRawText({arrayBuffer:e.target.result}).then(r => {
+        const lines = r.value.split('\n').map(l=>l.trim()).filter(Boolean);
+        const matrix = lines.map(l=>l.split(/\t| {2,}/).map(c=>c.trim()));
+        loadFromMatrix(matrix);
+      }).catch(ex=>showUploadError('Could not parse Word: '+ex.message));
     };
     reader.readAsArrayBuffer(file);
   };
-  document.head.appendChild(script);
+  document.head.appendChild(s);
 }
 
-// ============================================================
-// COLUMN MAP for Excel / matrix parsing
-// ============================================================
+// Column name matching — specific patterns first
 const COL_MAP = [
-  { match: /audio video technical/i, key: 'avTech' },
-  { match: /av technical/i,          key: 'avTech' },
-  { match: /technical person/i,      key: 'avTech' },
-  { match: /hall attendant/i,        key: 'hallAttendant' },
-  { match: /door attendant/i,        key: 'doorAttendant' },
-  { match: /parking/i,               key: 'parking' },
-  { match: /last prayer/i,           key: 'lastPrayer' },
-  { match: /audio video/i,           key: 'av' },
-  { match: /\bstage\b/i,             key: 'stage' },
-  { match: /microphone/i,            key: 'microphone' },
-  { match: /chairman/i,              key: 'chairman' },
-  { match: /wt reading/i,            key: 'wtReading' },
-  { match: /watchtower/i,            key: 'wtReading' },
+  {match:/audio video technical/i,  key:'avTech'},
+  {match:/av technical/i,           key:'avTech'},
+  {match:/technical person/i,       key:'avTech'},
+  {match:/hall attendant/i,         key:'hallAttendant'},
+  {match:/door attendant/i,         key:'doorAttendant'},
+  {match:/parking/i,                key:'parking'},
+  {match:/last prayer/i,            key:'lastPrayer'},
+  {match:/audio video/i,            key:'av'},
+  {match:/\bstage\b/i,              key:'stage'},
+  {match:/microphone/i,             key:'microphone'},
+  {match:/chairman/i,               key:'chairman'},
+  {match:/wt reading/i,             key:'wtReading'},
+  {match:/watchtower/i,             key:'wtReading'},
 ];
-
-function matchCol(header) {
-  const h = String(header).trim();
-  for (const col of COL_MAP) {
-    if (col.match.test(h)) return col.key;
-  }
+function matchCol(h){
+  const s = String(h).trim();
+  for(const c of COL_MAP) if(c.match.test(s)) return c.key;
   return null;
 }
 
-function loadFromMatrix(data) {
-  // Find header row (scan first 6 rows)
-  let headerRow = -1;
-  for (let r = 0; r < Math.min(data.length, 6); r++) {
-    if (data[r].some(c => /hall|door|parking|audio|stage|microphone/i.test(String(c)))) {
-      headerRow = r; break;
-    }
+function loadFromMatrix(data){
+  let hRow = -1;
+  for(let r=0;r<Math.min(data.length,6);r++){
+    if(data[r].some(c=>/hall|door|parking|audio|stage|microphone/i.test(String(c)))){hRow=r;break;}
   }
-  if (headerRow < 0) {
-    showUploadError('Could not detect column headers. Make sure row 1 has names like "Hall Attendant", "Audio Video", etc.');
-    return;
-  }
+  if(hRow<0){ showUploadError('Could not detect column headers. Make sure row 1 has: "Hall Attendant", "Audio Video", etc.'); return; }
 
-  const headers = data[headerRow].map(h => String(h));
-  const cols = headers.map(h => matchCol(h));
+  const cols = data[hRow].map(h=>matchCol(h));
+  for(const k in persons) persons[k]=[];
 
-  for (const k in persons) persons[k] = [];
-
-  for (let r = headerRow + 1; r < data.length; r++) {
-    data[r].forEach((cell, c) => {
-      const key = cols[c];
-      if (!key) return;
-      const name = String(cell).trim();
-      if (name && name !== '' && !persons[key].includes(name)) {
-        persons[key].push(name);
-      }
+  for(let r=hRow+1;r<data.length;r++){
+    data[r].forEach((cell,c)=>{
+      const key=cols[c];
+      if(!key) return;
+      const name=String(cell).trim();
+      if(name && !persons[key].includes(name)) persons[key].push(name);
     });
   }
-
   finalizeLoad();
 }
 
-function finalizeLoad() {
-  const warnings = [];
-  if (persons.hallAttendant.length < 2) warnings.push('Hall Attendant: very few people');
-  if (persons.avTech.length < 1)        warnings.push('AV Technical Person: none found — check column name in file');
-  if (persons.av.length < 1)            warnings.push('Audio Video: none found');
+function finalizeLoad(){
+  const warnings=[];
+  if(persons.avTech.length<1) warnings.push('AV Technical Person: none found — check column header in file');
+  if(persons.av.length<1) warnings.push('Audio Video: none found');
+  if(persons.microphone.length<2) warnings.push('Microphone: fewer than 2 people');
 
-  const total = Object.values(persons).reduce((s, a) => s + a.length, 0);
-  if (total === 0) { showUploadError('No names found. Check the file format.'); return; }
+  const total = Object.values(persons).reduce((s,a)=>s+a.length,0);
+  if(total===0){ showUploadError('No names found. Check the file format.'); return; }
 
-  // Show breakdown
   const breakdown = Object.entries(persons)
-    .filter(([, v]) => v.length > 0)
-    .map(([k, v]) => `${k.replace(/([A-Z])/g,' $1').trim()}: ${v.length}`)
+    .filter(([,v])=>v.length>0)
+    .map(([k,v])=>`${k.replace(/([A-Z])/g,' $1').trim()}: ${v.length}`)
     .join(' | ');
 
-  document.getElementById('uploadSuccess').style.display = 'block';
-  document.getElementById('uploadSuccess').innerHTML =
-    `✓ Loaded ${total} name entries across ${Object.values(persons).filter(a=>a.length>0).length} categories.<br>
-     <small style="opacity:0.8">${breakdown}</small>`;
-
-  if (warnings.length) showWarn(warnings.join(' | '));
+  document.getElementById('uploadSuccess').style.display='block';
+  document.getElementById('uploadSuccess').innerHTML=
+    `✓ Loaded ${total} entries across ${Object.values(persons).filter(a=>a.length>0).length} categories.<br>
+     <small style="opacity:.8">${breakdown}</small>`;
+  if(warnings.length) showWarn(warnings.join(' | '));
   hideError();
 }
 
-function loadManual() {
-  const fields = {
-    hallAttendant: 'm_hall', doorAttendant: 'm_door', parking: 'm_parking',
-    lastPrayer: 'm_prayer', avTech: 'm_avtech', av: 'm_av',
-    stage: 'm_stage', microphone: 'm_mic', chairman: 'm_chairman', wtReading: 'm_wt'
-  };
-  for (const [k, id] of Object.entries(fields)) {
-    const val = document.getElementById(id).value;
-    persons[k] = val.split(',').map(n => n.trim()).filter(Boolean);
+function loadManual(){
+  const fields={hallAttendant:'m_hall',doorAttendant:'m_door',parking:'m_parking',
+    lastPrayer:'m_prayer',avTech:'m_avtech',av:'m_av',stage:'m_stage',
+    microphone:'m_mic',chairman:'m_chairman',wtReading:'m_wt'};
+  for(const [k,id] of Object.entries(fields)){
+    persons[k]=document.getElementById(id).value.split(',').map(n=>n.trim()).filter(Boolean);
   }
   finalizeLoad();
 }
-
-function toggleManual() {
-  const el = document.getElementById('manualEntry');
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+function toggleManual(){
+  const el=document.getElementById('manualEntry');
+  el.style.display=el.style.display==='none'?'block':'none';
 }
 
-// ============================================================
+// ─────────────────────────────────────────────
+// DAY SELECTOR — enforce mutual exclusivity with UI feedback
+// ─────────────────────────────────────────────
+function syncDaySelectors(){
+  // Radio buttons already enforce one-of-each natively — nothing extra needed.
+  // This is a no-op hook left for future extension.
+}
+
+// ─────────────────────────────────────────────
+// DATE FORMATTING
+// ─────────────────────────────────────────────
+const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function fmtDate(d){
+  const day = String(d.getDate()).padStart(2,'0');
+  const mon = MONTHS[d.getMonth()];
+  const yr  = d.getFullYear();
+  return `${day}-${mon}-${yr}`;
+}
+function formatDateLabel(d){
+  return d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+}
+function getDayName(jsDay){
+  return DAY_NAMES[jsDay];
+}
+
+// ─────────────────────────────────────────────
+// ISO WEEK KEY
+// ─────────────────────────────────────────────
+function isoWeekKey(d){
+  const t=new Date(d.getTime());
+  t.setHours(0,0,0,0);
+  t.setDate(t.getDate()+4-(t.getDay()||7));
+  const ys=new Date(t.getFullYear(),0,1);
+  const wk=Math.ceil((((t-ys)/86400000)+1)/7);
+  return `${t.getFullYear()}-${String(wk).padStart(2,'0')}`;
+}
+
+// ─────────────────────────────────────────────
 // SCHEDULE GENERATION
-// ============================================================
-function generateSchedule() {
-  const cong     = document.getElementById('congName').value.trim() || 'CONGREGATION';
+// ─────────────────────────────────────────────
+function generateSchedule(){
+  const cong     = document.getElementById('congName').value.trim()||'CONGREGATION';
   const startVal = document.getElementById('startDate').value;
   const endVal   = document.getElementById('endDate').value;
+  const weekendDay = parseInt(document.querySelector('input[name="weekend"]:checked')?.value??'0');
+  const midweekDay = parseInt(document.querySelector('input[name="midweek"]:checked')?.value??'3');
 
-  const weekendDay = parseInt(document.querySelector('input[name="weekend"]:checked')?.value ?? '0');
-  const midweekDay = parseInt(document.querySelector('input[name="midweek"]:checked')?.value ?? '3');
+  if(!startVal||!endVal){ showConfigError('Please select start and end dates.'); return; }
+  const start=new Date(startVal+'T00:00:00');
+  const end  =new Date(endVal  +'T00:00:00');
+  if(end<start){ showConfigError('End date must be after start date.'); return; }
 
-  if (!startVal || !endVal) { showConfigError('Please select start and end dates.'); return; }
-  const start = new Date(startVal + 'T00:00:00');
-  const end   = new Date(endVal   + 'T00:00:00');
-  if (end < start) { showConfigError('End date must be after start date.'); return; }
-
-  const totalNames = Object.values(persons).reduce((s,a) => s + a.length, 0);
-  if (totalNames === 0) {
-    showConfigError('No names loaded. Please upload your assignment list file first.');
-    return;
+  if(Object.values(persons).reduce((s,a)=>s+a.length,0)===0){
+    showConfigError('No names loaded. Please upload your assignment list file first.'); return;
   }
-
   hideConfigError();
 
   // Build meeting dates
-  const meetingDates = [];
-  const cur = new Date(start);
-  while (cur <= end) {
-    const day = cur.getDay();
-    if (day === weekendDay) meetingDates.push({ date: new Date(cur), type: 'Weekend' });
-    else if (day === midweekDay) meetingDates.push({ date: new Date(cur), type: 'Midweek' });
-    cur.setDate(cur.getDate() + 1);
+  const meetingDates=[];
+  const cur=new Date(start);
+  while(cur<=end){
+    const d=cur.getDay();
+    if(d===weekendDay) meetingDates.push({date:new Date(cur),type:'Weekend'});
+    else if(d===midweekDay) meetingDates.push({date:new Date(cur),type:'Midweek'});
+    cur.setDate(cur.getDate()+1);
   }
+  if(meetingDates.length===0){ showConfigError('No meeting days found in selected range.'); return; }
 
-  if (meetingDates.length === 0) {
-    showConfigError('No meeting days found in selected date range.'); return;
-  }
-
-  // Initialise per-person stats
-  assignmentStats = {};
-  const allNames = new Set(Object.values(persons).flat());
-  allNames.forEach(n => {
-    assignmentStats[n] = { total: 0, last: null, categories: {}, lastWeek: null };
+  // Init per-person stats
+  assignmentStats={};
+  new Set(Object.values(persons).flat()).forEach(n=>{
+    assignmentStats[n]={
+      groupATotal:0,   // total Group A assignments (hall/door/parking/av/stage/mic)
+      groupBTotal:0,   // total Group B assignments (lastPrayer/chairman/wtReading)
+      lastWeekA:null,  // ISO week of last Group A assignment
+      lastWeekB:null,  // ISO week of last Group B assignment
+      lastMeetingA:-99, // meeting index of last Group A assignment
+      lastMeetingB:-99, // meeting index of last Group B assignment
+      catHistory:{}    // { category: [meetingIndex, ...] } for 3-meeting gap rule
+    };
   });
 
-  const warnings = [];
-  schedule = meetingDates.map(({ date, type }) => buildRow(date, type, warnings));
+  const warnings=[];
+  schedule=meetingDates.map(({date,type},idx)=>buildRow(date,type,idx,warnings));
 
-  lastConfig = { cong, startVal, endVal, weekendDay, midweekDay };
+  lastConfig={cong,startVal,endVal,weekendDay,midweekDay};
 
-  renderTable(cong);
+  const weekendName = getDayName(weekendDay);
+  const midweekName = getDayName(midweekDay);
+  renderTable(weekendName, midweekName);
   renderStats();
 
-  if (warnings.length) {
-    showSchedWarn([...new Set(warnings)].slice(0, 6).join('<br>'));
+  if(warnings.length){
+    showSchedWarn([...new Set(warnings)].slice(0,6).join('<br>'));
   } else {
-    document.getElementById('schedWarn').style.display = 'none';
+    document.getElementById('schedWarn').style.display='none';
   }
 
-  document.getElementById('printCong').textContent   = cong;
-  document.getElementById('printPeriod').textContent = formatDateLabel(start) + (
-    start.getMonth() !== end.getMonth() || start.getFullYear() !== end.getFullYear()
-      ? ' – ' + formatDateLabel(end) : '');
-
+  document.getElementById('printCong').textContent=cong;
+  document.getElementById('printPeriod').textContent=getSchedulePeriod();
   switchTab('preview');
 }
 
-// ============================================================
-// ISO WEEK KEY
-// ============================================================
-function isoWeekKey(d) {
-  const tmp = new Date(d.getTime());
-  tmp.setHours(0, 0, 0, 0);
-  tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
-  const yearStart = new Date(tmp.getFullYear(), 0, 1);
-  const wk = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
-  return `${tmp.getFullYear()}-${String(wk).padStart(2, '0')}`;
-}
-
-// ============================================================
+// ─────────────────────────────────────────────
 // BUILD ROW
-// ============================================================
-function buildRow(date, type, warnings) {
-  const isWeekend = type === 'Weekend';
+// ─────────────────────────────────────────────
+function buildRow(date, type, meetingIdx, warnings){
+  const isWeekend = type==='Weekend';
   const weekKey   = isoWeekKey(date);
-
-  // Track who has already been assigned on THIS DAY (hard — never assign twice same day)
   const usedToday = new Set();
 
   /**
-   * pick(pool, label)
-   * Selects the best available person from `pool`.
+   * pick(pool, category, groupKey)
    *
-   * Rules (in order of priority):
-   *  1. Never pick someone already used TODAY (hard rule — skip if pool exhausted)
-   *  2. Prefer someone not yet assigned THIS WEEK (soft rule — fall back if needed)
-   *  3. Among eligible: prefer fewest total assignments, then longest gap
-   *  4. Pick randomly among the top equal tier (max 3) for variety
+   * Priority chain (each step narrows candidates, falling back if result is empty):
+   *  1. [HARD]      Not assigned twice on same day
+   *  2. [SOFT]      No same-group assignment this calendar week
+   *  3. [SOFT]      Gap since last Group assignment >= 2 meetings (prevents consecutive-week monopoly)
+   *  4. [SOFT]      Not same category in last 3 meetings
+   *  5. [FALLBACK]  Not same category as last meeting (consecutive block)
+   *  6. [SORT]      Fewest group-specific assignments → longest gap since last assigned → random
    *
-   * IMPORTANT: only adds a real name to usedToday — never '—'
+   * The key fix: sort by groupATotal or groupBTotal (NOT overall total).
+   * This prevents AV-heavy people (high overall total) from scoring "behind"
+   * Group-B-light people and stealing Chairman/WT Reading slots.
    */
-  const pick = (pool, label) => {
-    if (!pool || pool.length === 0) {
-      warnings.push(`No people listed for "${label}"`);
+  const pick = (pool, category, groupKey) => {
+    if(!pool||pool.length===0){
+      warnings.push(`No people listed for "${category}"`);
       return '—';
     }
 
-    // Step 1: prefer not used today
-    let candidates = pool.filter(n => !usedToday.has(n));
-    if (candidates.length === 0) {
-      // Everyone in this pool is already assigned today — must reuse (warn)
-      warnings.push(`⚠ Pool too small for "${label}" on ${fmtDate(date)} — same-day repeat`);
-      candidates = [...pool];
+    const totalField   = groupKey==='B' ? 'groupBTotal'   : 'groupATotal';
+    const weekField    = groupKey==='B' ? 'lastWeekB'     : 'lastWeekA';
+    const meetingField = groupKey==='B' ? 'lastMeetingB'  : 'lastMeetingA';
+
+    const st = n => assignmentStats[n] || {groupATotal:0,groupBTotal:0,lastWeekA:null,lastWeekB:null,lastMeetingA:-99,lastMeetingB:-99,catHistory:{}};
+
+    // STEP 1: not used today (hard)
+    let candidates = pool.filter(n=>!usedToday.has(n));
+    if(candidates.length===0){
+      warnings.push(`⚠ Same-day pool exhausted for "${category}" on ${fmtDate(date)}`);
+      candidates=[...pool];
     }
 
-    // Step 2: prefer not used this week (soft)
-    const notThisWeek = candidates.filter(n => assignmentStats[n]?.lastWeek !== weekKey);
-    if (notThisWeek.length > 0) {
-      candidates = notThisWeek;
-    } else {
-      warnings.push(`ℹ All candidates for "${label}" already assigned this week on ${fmtDate(date)}`);
-      // keep full candidates list — at least try to pick least-assigned
+    // STEP 2: not already assigned in this group this week (soft)
+    const notThisWeek = candidates.filter(n=>st(n)[weekField]!==weekKey);
+    if(notThisWeek.length>0) candidates=notThisWeek;
+    else warnings.push(`ℹ All "${category}" candidates have a ${groupKey==='B'?'Group B':'Group A'} assignment this week on ${fmtDate(date)}`);
+
+    // STEP 3: gap of at least 2 meetings since last same-group assignment (stops back-to-back weeks)
+    const notRecent = candidates.filter(n=>meetingIdx - st(n)[meetingField] >= 2);
+    if(notRecent.length>0) candidates=notRecent;
+
+    // STEP 4: not same category in last 3 meetings
+    const notSame3 = candidates.filter(n=>{
+      const hist=st(n).catHistory[category]||[];
+      return hist.length===0 || (meetingIdx-hist[hist.length-1])>=3;
+    });
+    if(notSame3.length>0) candidates=notSame3;
+    else {
+      // STEP 5 fallback: at least not consecutive
+      const notConsec = candidates.filter(n=>{
+        const hist=st(n).catHistory[category]||[];
+        return hist.length===0 || hist[hist.length-1]!==meetingIdx-1;
+      });
+      if(notConsec.length>0) candidates=notConsec;
+      else warnings.push(`⚠ Consecutive "${category}" repeat on ${fmtDate(date)} — pool too small`);
     }
 
-    // Step 3: sort by fairness
-    candidates.sort((a, b) => {
-      const sa = assignmentStats[a] || { total: 0, last: null };
-      const sb = assignmentStats[b] || { total: 0, last: null };
-      if (sa.total !== sb.total) return sa.total - sb.total;
-      const ga = sa.last ? (date - sa.last) : Infinity;
-      const gb = sb.last ? (date - sb.last) : Infinity;
-      return gb - ga;
+    // STEP 6: sort by group-specific total (KEY FIX), then by gap since last
+    candidates.sort((a,b)=>{
+      const sa=st(a), sb=st(b);
+      const ta=sa[totalField], tb=sb[totalField];
+      if(ta!==tb) return ta-tb;
+      // Secondary: longest gap since last assignment in this group
+      const ga=meetingIdx - sa[meetingField];
+      const gb=meetingIdx - sb[meetingField];
+      return gb-ga;
     });
 
-    // Step 4: random among top tier
-    const minTotal = (assignmentStats[candidates[0]] || { total: 0 }).total;
-    const topTier  = candidates.filter(n => (assignmentStats[n]?.total ?? 0) <= minTotal + 1);
-    const chosen   = topTier[Math.floor(Math.random() * Math.min(topTier.length, 3))];
+    // Random among top tier (those within 1 of minimum group total)
+    const minT=st(candidates[0])[totalField];
+    const topTier=candidates.filter(n=>st(n)[totalField]<=minT+1);
+    const chosen=topTier[Math.floor(Math.random()*Math.min(topTier.length,3))];
 
     // Record
-    usedToday.add(chosen);                                    // only real names added
-    if (!assignmentStats[chosen])
-      assignmentStats[chosen] = { total: 0, last: null, categories: {}, lastWeek: null };
-    assignmentStats[chosen].total++;
-    assignmentStats[chosen].last     = date;
-    assignmentStats[chosen].lastWeek = weekKey;
-    assignmentStats[chosen].categories[label] =
-      (assignmentStats[chosen].categories[label] || 0) + 1;
+    usedToday.add(chosen);
+    if(!assignmentStats[chosen])
+      assignmentStats[chosen]={groupATotal:0,groupBTotal:0,lastWeekA:null,lastWeekB:null,lastMeetingA:-99,lastMeetingB:-99,catHistory:{}};
+    const s=assignmentStats[chosen];
+    if(groupKey==='B'){ s.groupBTotal++; s.lastWeekB=weekKey; s.lastMeetingB=meetingIdx; }
+    else              { s.groupATotal++; s.lastWeekA=weekKey; s.lastMeetingA=meetingIdx; }
+    if(!s.catHistory[category]) s.catHistory[category]=[];
+    s.catHistory[category].push(meetingIdx);
 
     return chosen;
   };
 
-  // --- Common assignments (both Weekend and Midweek) ---
-  const hall    = pick(persons.hallAttendant, 'Hall Attendant');
-  const door    = pick(persons.doorAttendant, 'Door Attendant');
-  const parking = pick(persons.parking,       'Parking');
+  // ── Common (both meeting types) ──
+  const hall    = pick(persons.hallAttendant,'Hall Attendant','A');
+  const door    = pick(persons.doorAttendant,'Door Attendant','A');
+  const parking = pick(persons.parking,'Parking','A');
 
   // AV: one from avTech + one from av (different people)
-  const avTechPerson = pick(persons.avTech, 'AV Tech');
-  // For AV regular, exclude avTechPerson AND anyone already used today
-  const avPool = persons.av.filter(n => n !== avTechPerson && !usedToday.has(n));
-  const avPerson = avPool.length > 0
-    ? pick(avPool, 'AV')
-    : pick(persons.av.filter(n => n !== avTechPerson), 'AV');
+  const avTechPerson = pick(persons.avTech,'AV Tech','A');
+  const avPool  = persons.av.filter(n=>n!==avTechPerson&&!usedToday.has(n));
+  const avPerson= avPool.length>0
+    ? pick(avPool,'AV','A')
+    : pick(persons.av.filter(n=>n!==avTechPerson),'AV','A');
 
   // Microphone: 2 different people
-  const mic1     = pick(persons.microphone, 'Microphone 1');
-  const mic2Pool = persons.microphone.filter(n => n !== mic1 && !usedToday.has(n));
-  const mic2     = mic2Pool.length > 0
-    ? pick(mic2Pool, 'Microphone 2')
-    : pick(persons.microphone.filter(n => n !== mic1), 'Microphone 2');
+  const mic1     = pick(persons.microphone,'Microphone 1','A');
+  const mic2Pool = persons.microphone.filter(n=>n!==mic1&&!usedToday.has(n));
+  const mic2     = mic2Pool.length>0
+    ? pick(mic2Pool,'Microphone 2','A')
+    : pick(persons.microphone.filter(n=>n!==mic1),'Microphone 2','A');
 
-  // --- Meeting-type-specific assignments ---
-  let lastPrayer = '', stage1 = '', stage2 = '', chairman = '', wtReading = '';
+  // ── Meeting-type specific ──
+  let lastPrayer='', stage1='', stage2='', chairman='', wtReading='';
 
-  if (isWeekend) {
-    lastPrayer = pick(persons.lastPrayer, 'Last Prayer');
-    stage1     = pick(persons.stage,      'Stage');
-    chairman   = pick(persons.chairman,   'Chairman');
-    wtReading  = pick(persons.wtReading,  'WT Reading');
+  if(isWeekend){
+    stage1     = pick(persons.stage,'Stage','A');
+    lastPrayer = pick(persons.lastPrayer,'Last Prayer','B');
+    chairman   = pick(persons.chairman,'Chairman','B');
+    wtReading  = pick(persons.wtReading,'WT Reading','B');
   } else {
-    // Midweek: 2 stage persons, no Last Prayer / Chairman / WT Reading
-    stage1 = pick(persons.stage, 'Stage 1');
-    const stage2Pool = persons.stage.filter(n => n !== stage1 && !usedToday.has(n));
-    stage2 = stage2Pool.length > 0
-      ? pick(stage2Pool, 'Stage 2')
-      : pick(persons.stage.filter(n => n !== stage1), 'Stage 2');
+    stage1 = pick(persons.stage,'Stage 1','A');
+    const s2Pool=persons.stage.filter(n=>n!==stage1&&!usedToday.has(n));
+    stage2 = s2Pool.length>0
+      ? pick(s2Pool,'Stage 2','A')
+      : pick(persons.stage.filter(n=>n!==stage1),'Stage 2','A');
   }
 
-  return { date, type, hall, door, parking, lastPrayer, avTech: avTechPerson, av: avPerson, stage1, stage2, mic1, mic2, chairman, wtReading };
+  return {date,type,hall,door,parking,lastPrayer,avTech:avTechPerson,av:avPerson,stage1,stage2,mic1,mic2,chairman,wtReading};
 }
 
-// ============================================================
+// ─────────────────────────────────────────────
 // RENDER TABLE
-// ============================================================
-function renderTable(cong) {
-  const tbody = document.getElementById('scheduleBody');
-  tbody.innerHTML = '';
-
-  schedule.forEach(row => {
-    const tr = document.createElement('tr');
-    const isWeekend = row.type === 'Weekend';
-    tr.innerHTML = `
-      <td><strong>${fmtDate(row.date)}</strong><br><span class="date-day">${row.type}</span></td>
+// ─────────────────────────────────────────────
+function renderTable(weekendName, midweekName){
+  const tbody=document.getElementById('scheduleBody');
+  tbody.innerHTML='';
+  schedule.forEach(row=>{
+    const tr=document.createElement('tr');
+    const isW=row.type==='Weekend';
+    const dayLabel = isW ? weekendName : midweekName;
+    tr.innerHTML=`
+      <td><strong>${fmtDate(row.date)}</strong><br><span class="date-day">${dayLabel}</span></td>
       <td contenteditable="true">${row.hall}</td>
       <td contenteditable="true">${row.door}</td>
       <td contenteditable="true">${row.parking}</td>
-      <td contenteditable="true">${isWeekend ? row.lastPrayer : ''}</td>
+      <td contenteditable="true">${isW?row.lastPrayer:''}</td>
       <td contenteditable="true">${row.avTech}<br>${row.av}</td>
-      <td contenteditable="true">${row.stage1}${row.stage2 ? '<br>' + row.stage2 : ''}</td>
+      <td contenteditable="true">${row.stage1}${row.stage2?'<br>'+row.stage2:''}</td>
       <td contenteditable="true">${row.mic1}<br>${row.mic2}</td>
-      <td contenteditable="true">${isWeekend ? row.chairman : ''}</td>
-      <td contenteditable="true">${isWeekend ? row.wtReading : ''}</td>
+      <td contenteditable="true">${isW?row.chairman:''}</td>
+      <td contenteditable="true">${isW?row.wtReading:''}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-// ============================================================
+// ─────────────────────────────────────────────
 // STATS
-// ============================================================
-function renderStats() {
-  const el = document.getElementById('statsContent');
-  const sorted = Object.entries(assignmentStats)
-    .filter(([, s]) => s.total > 0)
-    .sort((a, b) => b[1].total - a[1].total);
+// ─────────────────────────────────────────────
+function renderStats(){
+  const el=document.getElementById('statsContent');
+  const entries=Object.entries(assignmentStats).filter(([,s])=>(s.groupATotal||0)+(s.groupBTotal||0)>0);
+  if(!entries.length){ el.textContent='No data yet.'; return; }
 
-  if (sorted.length === 0) { el.textContent = 'No data yet.'; return; }
+  // Sort by total (A+B) descending
+  entries.sort((a,b)=>((b[1].groupATotal||0)+(b[1].groupBTotal||0))-((a[1].groupATotal||0)+(a[1].groupBTotal||0)));
 
-  let html = `<div style="margin-bottom:12px;font-size:0.85rem;color:var(--text2)">Total assignments per person:</div><div class="stats-grid">`;
-  sorted.forEach(([name, s]) => {
-    const cats = Object.entries(s.categories).map(([k,v]) => `${k}: ${v}`).join(', ');
-    html += `<div class="stat-card">
-      <div class="stat-name">${name}</div>
-      <div class="stat-count">${s.total} <span style="font-size:0.7rem;color:var(--text2)">total</span></div>
-      <div style="font-size:0.7rem;color:var(--text2);margin-top:3px">${cats}</div>
-    </div>`;
+  // Build per-category table
+  const allCats=['Hall Attendant','Door Attendant','Parking','AV Tech','AV','Stage 1','Stage 2','Microphone 1','Microphone 2','Last Prayer','Chairman','WT Reading'];
+  const groupBCats=['Last Prayer','Chairman','WT Reading'];
+
+  let html=`<div style="font-size:.82rem;color:var(--text2);margin-bottom:14px">
+    Sorted by total assignments. <b style="color:var(--accent)">Group B</b> (Last Prayer / Chairman / WT Reading) 
+    uses its own fairness counter — equal distribution is enforced independently.
+  </div>`;
+
+  // Summary table
+  html+=`<div style="overflow-x:auto;margin-bottom:20px">
+  <table style="border-collapse:collapse;font-size:.75rem;width:100%;min-width:600px">
+  <thead><tr style="background:var(--accent);color:white">
+    <th style="padding:6px 8px;text-align:left;font-weight:600">Person</th>
+    <th style="padding:6px 8px" title="Group A total">Group A</th>
+    <th style="padding:6px 8px" title="Group B total">Group B</th>
+    <th style="padding:6px 8px">Last Prayer</th>
+    <th style="padding:6px 8px">Chairman</th>
+    <th style="padding:6px 8px">WT Reading</th>
+    <th style="padding:6px 8px">Hall</th>
+    <th style="padding:6px 8px">Door</th>
+    <th style="padding:6px 8px">Parking</th>
+    <th style="padding:6px 8px">AV</th>
+    <th style="padding:6px 8px">Stage</th>
+    <th style="padding:6px 8px">Mic</th>
+  </tr></thead><tbody>`;
+
+  entries.forEach(([name,s],i)=>{
+    const ch=s.catHistory||{};
+    const gA=s.groupATotal||0, gB=s.groupBTotal||0;
+    const bg=i%2===0?'var(--surface)':'var(--gold-light)';
+    html+=`<tr style="background:${bg}">
+      <td style="padding:5px 8px;font-weight:600;border:1px solid var(--border)">${name}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${gA}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);color:var(--accent);font-weight:600">${gB}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Last Prayer']||[]).length||0}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Chairman']||[]).length||0}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['WT Reading']||[]).length||0}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Hall Attendant']||[]).length||0}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Door Attendant']||[]).length||0}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${(ch['Parking']||[]).length||0}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${((ch['AV Tech']||[]).length||0)+((ch['AV']||[]).length||0)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${((ch['Stage 1']||[]).length||0)+((ch['Stage']||[]).length||0)+((ch['Stage 2']||[]).length||0)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${((ch['Microphone 1']||[]).length||0)+((ch['Microphone 2']||[]).length||0)}</td>
+    </tr>`;
   });
-  html += `</div>`;
-  el.innerHTML = html;
+  html+=`</tbody></table></div>`;
+  el.innerHTML=html;
 }
 
-// ============================================================
-// EXPORT
-// ============================================================
-function exportPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc  = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  const cong = document.getElementById('congName').value || 'CONGREGATION';
+// ─────────────────────────────────────────────
+// EXPORT HELPERS
+// ─────────────────────────────────────────────
+function getSchedulePeriod(){
+  if(!schedule.length) return '';
+  const f=schedule[0].date, l=schedule[schedule.length-1].date;
+  if(f.getMonth()===l.getMonth()&&f.getFullYear()===l.getFullYear()) return formatDateLabel(f);
+  return formatDateLabel(f)+' – '+formatDateLabel(l);
+}
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.text('Duties Schedule', 14, 14);
-  doc.text(cong, doc.internal.pageSize.width - 14, 14, { align: 'right' });
+function getWeekendName(){
+  const v=parseInt(document.querySelector('input[name="weekend"]:checked')?.value??'0');
+  return getDayName(v);
+}
+function getMidweekName(){
+  const v=parseInt(document.querySelector('input[name="midweek"]:checked')?.value??'3');
+  return getDayName(v);
+}
 
-  doc.setFontSize(12);
-  doc.setTextColor(180, 30, 30);
-  doc.text(getSchedulePeriod(), doc.internal.pageSize.width / 2, 22, { align: 'center' });
-  doc.setTextColor(0, 0, 0);
+function exportPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const cong=document.getElementById('congName').value||'CONGREGATION';
+  const wkName=getWeekendName(), mwName=getMidweekName();
 
-  const rows = schedule.map(r => {
-    const w = r.type === 'Weekend';
-    return [
-      fmtDate(r.date) + '\n' + r.type,
+  doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.text('Duties Schedule',14,14);
+  doc.text(cong,doc.internal.pageSize.width-14,14,{align:'right'});
+  doc.setFontSize(12); doc.setTextColor(180,30,30);
+  doc.text(getSchedulePeriod(),doc.internal.pageSize.width/2,22,{align:'center'});
+  doc.setTextColor(0,0,0);
+
+  const rows=schedule.map(r=>{
+    const w=r.type==='Weekend';
+    const dayLabel=w?wkName:mwName;
+    return[
+      fmtDate(r.date)+'\n'+dayLabel,
       r.hall, r.door, r.parking,
-      w ? r.lastPrayer : '',
-      r.avTech + '\n' + r.av,
-      r.stage1 + (r.stage2 ? '\n' + r.stage2 : ''),
-      r.mic1 + '\n' + r.mic2,
-      w ? r.chairman : '',
-      w ? r.wtReading : ''
+      w?r.lastPrayer:'',
+      r.avTech+'\n'+r.av,
+      r.stage1+(r.stage2?'\n'+r.stage2:''),
+      r.mic1+'\n'+r.mic2,
+      w?r.chairman:'',
+      w?r.wtReading:''
     ];
   });
 
   doc.autoTable({
-    startY: 28,
-    head: [['Date','Hall\nAttendant','Door\nAttendant','Parking','Last Prayer','Audio Video','Stage','Microphone','Chairman','WT Reading']],
-    body: rows,
-    styles: { fontSize: 7.5, cellPadding: 3, valign: 'top', overflow: 'linebreak' },
-    headStyles: { fillColor: [139, 26, 26], textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
-    alternateRowStyles: { fillColor: [245, 240, 224] },
-    columnStyles: { 0: { cellWidth: 22 }, 4: { cellWidth: 18 }, 8: { cellWidth: 20 }, 9: { cellWidth: 20 } }
+    startY:28,
+    head:[['Date','Hall\nAttendant','Door\nAttendant','Parking','Last Prayer','Audio Video','Stage','Microphone','Chairman','WT Reading']],
+    body:rows,
+    styles:{fontSize:7.5,cellPadding:3,valign:'top',overflow:'linebreak'},
+    headStyles:{fillColor:[139,26,26],textColor:255,fontStyle:'bold',fontSize:7.5},
+    alternateRowStyles:{fillColor:[245,240,224]},
+    columnStyles:{0:{cellWidth:24},4:{cellWidth:18},8:{cellWidth:20},9:{cellWidth:20}}
   });
-
   doc.save(`DutiesSchedule_${cong.replace(/\s+/g,'_')}.pdf`);
 }
 
-function exportExcel() {
-  const wb   = XLSX.utils.book_new();
-  const cong = document.getElementById('congName').value || 'CONGREGATION';
-
-  const header = ['Date','Type','Hall Attendant','Door Attendant','Parking','Last Prayer','AV Tech','AV','Stage 1','Stage 2','Mic 1','Mic 2','Chairman','WT Reading'];
-  const rows   = schedule.map(r => {
-    const w = r.type === 'Weekend';
-    return [fmtDate(r.date), r.type, r.hall, r.door, r.parking,
-      w ? r.lastPrayer : '', r.avTech, r.av,
-      r.stage1, r.stage2 || '', r.mic1, r.mic2,
-      w ? r.chairman : '', w ? r.wtReading : ''];
+function exportExcel(){
+  const wb=XLSX.utils.book_new();
+  const cong=document.getElementById('congName').value||'CONGREGATION';
+  const wkName=getWeekendName(), mwName=getMidweekName();
+  const header=['Date','Day','Hall Attendant','Door Attendant','Parking','Last Prayer','AV Tech','AV','Stage 1','Stage 2','Mic 1','Mic 2','Chairman','WT Reading'];
+  const rows=schedule.map(r=>{
+    const w=r.type==='Weekend';
+    return[fmtDate(r.date),w?wkName:mwName,r.hall,r.door,r.parking,
+      w?r.lastPrayer:'',r.avTech,r.av,r.stage1,r.stage2||'',r.mic1,r.mic2,
+      w?r.chairman:'',w?r.wtReading:''];
   });
-
-  const ws = XLSX.utils.aoa_to_sheet([
-    [cong], ['Duties Schedule – ' + getSchedulePeriod()], [], header, ...rows
-  ]);
-  XLSX.utils.book_append_sheet(wb, ws, 'Schedule');
-  XLSX.writeFile(wb, `DutiesSchedule_${cong.replace(/\s+/g,'_')}.xlsx`);
+  const ws=XLSX.utils.aoa_to_sheet([[cong],['Duties Schedule – '+getSchedulePeriod()],[],header,...rows]);
+  ws['!cols']=header.map(()=>({wch:16}));
+  XLSX.utils.book_append_sheet(wb,ws,'Schedule');
+  XLSX.writeFile(wb,`DutiesSchedule_${cong.replace(/\s+/g,'_')}.xlsx`);
 }
 
-function exportWord() {
-  const cong    = document.getElementById('congName').value || 'CONGREGATION';
-  const tableEl = document.getElementById('scheduleTable');
-  const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
-    xmlns:w='urn:schemas-microsoft-com:office:word'>
-  <head><meta charset="UTF-8">
-  <style>
+function exportWord(){
+  const cong=document.getElementById('congName').value||'CONGREGATION';
+  const tableEl=document.getElementById('scheduleTable');
+  const html=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
+  <head><meta charset="UTF-8"><style>
     body{font-family:Calibri,sans-serif;font-size:10pt}
     h1{font-size:15pt} h2{color:#8b1a1a;font-size:13pt;text-align:center}
     table{border-collapse:collapse;width:100%}
@@ -1035,112 +895,75 @@ function exportWord() {
     <h2>${getSchedulePeriod()}</h2>
     ${tableEl.outerHTML}
   </body></html>`;
-
-  const blob = new Blob([html], { type: 'application/msword' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = `DutiesSchedule_${cong.replace(/\s+/g,'_')}.doc`;
+  const blob=new Blob([html],{type:'application/msword'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`DutiesSchedule_${cong.replace(/\s+/g,'_')}.doc`;
   a.click(); URL.revokeObjectURL(url);
 }
 
-// ============================================================
-// HELPERS
-// ============================================================
-function fmtDate(d) {
-  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+// ─────────────────────────────────────────────
+// TEMPLATE DOWNLOAD
+// ─────────────────────────────────────────────
+function downloadTemplate(){
+  const wb=XLSX.utils.book_new();
+  const headers=['Hall Attendant','Door Attendant','Parking','Last Prayer','Audio Video Technical Person','Audio Video','Stage','Microphone','Chairman','WT Reading'];
+  const data=[
+    ['James K M',  'James K M',  'James K M',  'James K M',   'Joyal Bijoy',   'Paul T C',      'Paul T C',    'Paul T C',    'James K M',  'James K M'],
+    ['Renju Kurian','Renju Kurian','Renju Kurian','Renju Kurian','Johnson Baby',  'Kenez T Robin', 'Kenez T Robin','Kenez T Robin','Renju Kurian','Renju Kurian'],
+    ['Ebin K Baby', 'Ebin K Baby', 'Ebin K Baby', 'Ebin K Baby', 'Paulson Baby',  'Robin T P',     'Robin T P',   'Robin T P',   'Ebin K Baby','Ebin K Baby'],
+    ['Joseph A S',  'Joseph A S',  'Joseph A S',  'Joseph A S',  'Roshan Joseph', 'Alphin Alex',   'Alphin Alex', 'Alphin Alex', 'Joseph A S', 'Phipson Joseph'],
+    ['Phipson Joseph','Phipson Joseph','Phipson Joseph','Phipson Joseph','Alex Baby','Alex Baby','Alex Baby','','Phipson Joseph','Paulson Baby'],
+    ['Paulson Baby','Paulson Baby','Paulson Baby','',            '',              'Albern Joseph', 'Albern Joseph','Albern Joseph','',           'Johnson Baby'],
+    ['Rajesh K',    'Rajesh K',    'Rajesh K',    '',            '',              'Bijoy Enas',    'Bijoy Enas',  '',            '',            'Joyal Bijoy'],
+    ['',            '',            '',            '',            '',              'Joyal Bijoy',   'Joyal Bijoy', 'Paulson Baby','',            'Paul T C'],
+    ['',            '',            '',            '',            '',              'Johnson Baby',  '',            'Johnson Baby','',            'Rajesh K'],
+    ['',            '',            '',            '',            '',              'Roshan Joseph', '',            'Joyal Bijoy', '',            ''],
+    ['',            '',            '',            '',            '',              '',              '',            'Paul T C',    '',            ''],
+  ];
+  const ws=XLSX.utils.aoa_to_sheet([headers,...data]);
+  ws['!cols']=headers.map(()=>({wch:24}));
+  // Bold header row
+  const range=XLSX.utils.decode_range(ws['!ref']);
+  for(let c=range.s.c;c<=range.e.c;c++){
+    const cell=ws[XLSX.utils.encode_cell({r:0,c})];
+    if(cell) cell.s={font:{bold:true},fill:{fgColor:{rgb:'8B1A1A'}},alignment:{horizontal:'center'}};
+  }
+  XLSX.utils.book_append_sheet(wb,ws,'Eligible Persons');
+  XLSX.writeFile(wb,'AssignmentEligibility_Template.xlsx');
 }
-function formatDateLabel(d) {
-  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-}
-function getSchedulePeriod() {
-  if (!schedule.length) return '';
-  const f = schedule[0].date, l = schedule[schedule.length-1].date;
-  if (f.getMonth() === l.getMonth() && f.getFullYear() === l.getFullYear())
-    return formatDateLabel(f);
-  return formatDateLabel(f) + ' – ' + formatDateLabel(l);
-}
-function regenerate() { if (lastConfig) generateSchedule(); }
 
-function showUploadError(msg) {
-  const el = document.getElementById('uploadError');
-  el.textContent = '⚠ ' + msg; el.style.display = 'block';
-}
-function hideError() { document.getElementById('uploadError').style.display = 'none'; }
-function showWarn(msg) {
-  const el = document.getElementById('uploadWarn');
-  el.textContent = '⚑ ' + msg; el.style.display = 'block';
-}
-function showConfigError(msg) {
-  const el = document.getElementById('configError');
-  el.textContent = '⚠ ' + msg; el.style.display = 'block';
-}
-function hideConfigError() { document.getElementById('configError').style.display = 'none'; }
-function showSchedWarn(html) {
-  const el = document.getElementById('schedWarn');
-  el.innerHTML = '⚑ ' + html; el.style.display = 'block';
-}
-function switchTab(name) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+function regenerate(){ if(lastConfig) generateSchedule(); }
+function showUploadError(m){ const e=document.getElementById('uploadError'); e.textContent='⚠ '+m; e.style.display='block'; }
+function hideError(){ document.getElementById('uploadError').style.display='none'; }
+function showWarn(m){ const e=document.getElementById('uploadWarn'); e.textContent='⚑ '+m; e.style.display='block'; }
+function showConfigError(m){ const e=document.getElementById('configError'); e.textContent='⚠ '+m; e.style.display='block'; }
+function hideConfigError(){ document.getElementById('configError').style.display='none'; }
+function showSchedWarn(h){ const e=document.getElementById('schedWarn'); e.innerHTML='⚑ '+h; e.style.display='block'; }
+function switchTab(name){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
   document.querySelectorAll('.tab')[['setup','preview','stats'].indexOf(name)].classList.add('active');
 }
-function toggleDark() {
+function toggleDark(){
   document.body.classList.toggle('dark');
-  document.querySelector('.dark-toggle').textContent =
-    document.body.classList.contains('dark') ? '☀ Light' : '🌙 Dark';
+  document.querySelector('.dark-toggle').textContent=document.body.classList.contains('dark')?'☀ Light':'🌙 Dark';
 }
+function formatDateLabel(d){ return d.toLocaleDateString('en-US',{month:'long',year:'numeric'}); }
 
-// ============================================================
-// TEMPLATE DOWNLOAD
-// ============================================================
-function downloadTemplate() {
-  const wb = XLSX.utils.book_new();
-
-  // Headers matching the exact column names the parser expects
-  const headers = [
-    'Hall Attendant',
-    'Door Attendant',
-    'Parking',
-    'Last Prayer',
-    'Audio Video Technical Person',
-    'Audio Video',
-    'Stage',
-    'Microphone',
-    'Chairman',
-    'WT Reading'
-  ];
-
-  // Sample rows showing the format
-  const sample = [
-    ['Name 1','Name 1','Name 1','Name 1','Name A','Name A','Name A','Name A','Name 1','Name 1'],
-    ['Name 2','Name 2','Name 2','Name 2','Name B','Name B','Name B','Name B','Name 2','Name 2'],
-    ['Name 3','Name 3','Name 3','Name 3','Name C','Name C','Name C','Name C','Name 3','Name 3'],
-    ['Name 4','Name 4','Name 4','',       '',       'Name D','Name D','Name D','Name 4','Name 4'],
-    ['Name 5','Name 5','Name 5','',       '',       'Name E','Name E','Name E','Name 5','Name 5'],
-    ['',       '',       '',      '',       '',       'Name F','Name F','Name F','',       'Name 6'],
-    ['',       '',       '',      '',       '',       'Name G','Name G','',      '',       'Name 7'],
-  ];
-
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...sample]);
-
-  // Column widths
-  ws['!cols'] = headers.map(() => ({ wch: 22 }));
-
-  XLSX.utils.book_append_sheet(wb, ws, 'Eligible Persons');
-  XLSX.writeFile(wb, 'AssignmentEligibility_Template.xlsx');
-}
-
-// ============================================================
+// ─────────────────────────────────────────────
 // INIT
-// ============================================================
-window.addEventListener('DOMContentLoaded', () => {
-  const now  = new Date();
-  const y    = now.getFullYear();
-  const m    = String(now.getMonth()+1).padStart(2,'0');
-  const last = new Date(y, now.getMonth()+1, 0).getDate();
-  document.getElementById('startDate').value = `${y}-${m}-01`;
-  document.getElementById('endDate').value   = `${y}-${m}-${String(last).padStart(2,'0')}`;
+// ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  const now=new Date();
+  const y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0');
+  const last=new Date(y,now.getMonth()+1,0).getDate();
+  document.getElementById('startDate').value=`${y}-${m}-01`;
+  document.getElementById('endDate').value=`${y}-${m}-${String(last).padStart(2,'0')}`;
 });
 </script>
 </body>
