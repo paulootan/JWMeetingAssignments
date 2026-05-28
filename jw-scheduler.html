@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JW Meeting Duties Scheduler</title>
+<title>Meeting Duties Scheduler</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -98,6 +98,13 @@
   .print-header h3{color:var(--accent);font-size:1.2rem}
 
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+  .upload-zone-sm{border:2px dashed var(--border);border-radius:var(--radius);padding:18px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);position:relative}
+  .upload-zone-sm:hover,.upload-zone-sm.drag{border-color:var(--accent);background:var(--gold-light)}
+  .upload-zone-sm input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+  .prev-success{margin-top:8px;padding:8px 12px;background:#e8f5e9;border:1px solid #81c784;border-radius:var(--radius);color:var(--success);font-size:.82rem;display:none}
+  .tag-chip{display:inline-flex;align-items:center;gap:5px;background:var(--gold-light);border:1px solid var(--gold);border-radius:12px;padding:3px 10px;font-size:.78rem;font-weight:600;color:var(--warn);margin:2px}
+  .tag-chip button{background:none;border:none;cursor:pointer;color:var(--text2);font-size:.85rem;padding:0;line-height:1}
+  .info-box{background:var(--gold-light);border:1px solid #d4b84a;border-radius:var(--radius);padding:10px 14px;font-size:.82rem;color:var(--warn);margin-top:10px;line-height:1.5}
 
   body.dark{--bg:#0f0d0b;--surface:#1a1714;--surface2:#231f1b;--border:#3a342e;--text:#e8e4de;--text2:#9a8f83;--gold-light:#2a2418}
   body.dark .upload-zone{background:var(--surface2)}
@@ -114,28 +121,7 @@
   .section-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:8px;margin-top:4px}
 
   @media(max-width:600px){.header-title{font-size:1.1rem}.card{padding:16px}.form-grid{grid-template-columns:1fr 1fr}}
-  .footer{
-  text-align:center;
-  padding:20px 12px;
-  font-size:.82rem;
-  color:var(--text2);
-  border-top:2px solid var(--accent);
-  margin-top:40px;
-  background:var(--surface);
-  line-height:1.6;
-}
 
-.footer .footer-title{
-  font-weight:600;
-  color:var(--accent);
-  font-family:'Crimson Pro',serif;
-  font-size:1rem;
-}
-
-.footer .footer-sub{
-  font-size:.75rem;
-  opacity:.8;
-}
   @media print{
     header,.card:not(#previewCard),.tabs,.btn-row{display:none!important}
     .main{padding:0;max-width:100%}
@@ -272,6 +258,48 @@
       <div class="alert alert-error" id="configError"></div>
       <button class="btn btn-primary" onclick="generateSchedule()">✦ Generate Schedule</button>
     </div>
+
+    <!-- WT CONDUCTOR CARD -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Watchtower Conductor <span style="font-size:.75rem;font-weight:400;color:var(--text2);margin-left:8px">Optional</span>
+      </div>
+      <div style="font-size:.85rem;color:var(--text2);margin-bottom:12px">
+        The WT Conductor gets a maximum of <strong>one</strong> assignment among Last Prayer, WT Reading, and Chairman per calendar month.
+      </div>
+      <div class="form-grid" style="grid-template-columns:1fr auto;align-items:end;gap:10px">
+        <div class="form-group" style="margin-bottom:0">
+          <label>WT Conductor Name</label>
+          <input type="text" id="wtConductorInput" placeholder="e.g. Rajesh K — leave blank if none" autocomplete="off">
+        </div>
+        <button class="btn btn-secondary" style="font-size:.82rem;height:38px;margin-bottom:0" onclick="addWtConductor()">+ Add</button>
+      </div>
+      <div id="wtConductorList" style="margin-top:10px;min-height:28px"></div>
+      <div class="info-box" id="wtConductorInfo" style="display:none"></div>
+    </div>
+
+    <!-- PREVIOUS SCHEDULE CARD -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Previous Schedule <span style="font-size:.75rem;font-weight:400;color:var(--text2);margin-left:8px">Optional — for carry-over fairness</span>
+      </div>
+      <div style="font-size:.85rem;color:var(--text2);margin-bottom:12px">
+        Upload the last period's exported Excel schedule so assignment counts carry over — ensuring no one gets too many or too few assignments across periods.
+      </div>
+      <div class="upload-zone-sm" id="prevZone" ondragover="prevEv(event)" ondrop="prevDrop(event)">
+        <input type="file" id="prevFileInput" accept=".xlsx,.xls" onchange="handlePrevFile(this.files[0])">
+        <div class="upload-icon">📋</div>
+        <div class="upload-text">Drag &amp; drop or tap to select previous schedule (.xlsx)</div>
+        <div class="upload-hint">Same format as the exported Excel from this tool</div>
+      </div>
+      <div class="prev-success" id="prevSuccess"></div>
+      <div class="alert alert-error" id="prevError" style="display:none;margin-top:8px"></div>
+      <div style="margin-top:10px">
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 14px" onclick="clearPrevSchedule()">✕ Clear Previous Schedule</button>
+      </div>
+    </div>
   </div>
 
   <!-- PREVIEW -->
@@ -327,12 +355,7 @@
     </div>
   </div>
 </div>
-<footer class="footer">
-  <div class="footer-title">Paulootan</div>
-  <div class="footer-sub">
-    © 2026 Paulootan — Designed & Maintained by Paulootan
-  </div>
-</footer>
+
 <script>
 // ═══════════════════════════════════════════════════════
 // DATA STORE
@@ -345,9 +368,14 @@ let schedule = [];
 let assignmentStats = {};
 let lastConfig = null;
 
+// WT Conductors: names that get max-1-per-month rule across LP/WT/Chairman
+let wtConductors = [];
+
+// Previous schedule carry-over: { personName: { 'Last Prayer':2, 'Chairman':1, ... } }
+let prevCounts = {};
+
 // ═══════════════════════════════════════════════════════
-// COLUMN MAPPING — handles multiple header variants
-// "AV Technical" is the actual header in the sample Excel
+// COLUMN MAPPING
 // ═══════════════════════════════════════════════════════
 const COL_MAP = [
   {match:/audio\s*video\s*technical/i, key:'avTech'},
@@ -372,7 +400,7 @@ function matchCol(h){
 }
 
 // ═══════════════════════════════════════════════════════
-// UPLOAD HANDLERS
+// UPLOAD HANDLERS — Eligibility List
 // ═══════════════════════════════════════════════════════
 function ev(e){ e.preventDefault(); document.getElementById('uploadZone').classList.add('drag'); }
 function drop(e){
@@ -386,7 +414,7 @@ function handleFile(file){
   hideError();
   if(ext==='xlsx'||ext==='xls') parseExcel(file);
   else if(ext==='docx') parseDOCX(file);
-  else if(ext==='pdf') showUploadError('PDF is not supported for the eligibility list. Please use the Excel (.xlsx) template.');
+  else if(ext==='pdf') showUploadError('PDF is not supported. Please use Excel (.xlsx) or Word (.docx).');
   else showUploadError('Unsupported file type. Please use Excel (.xlsx) or Word (.docx).');
 }
 
@@ -425,7 +453,7 @@ function loadFromMatrix(data){
   for(let r=0;r<Math.min(data.length,8);r++){
     if(data[r].some(c=>/hall|door|parking|audio|stage|microphone|technical/i.test(String(c)))){hRow=r;break;}
   }
-  if(hRow<0){ showUploadError('Could not detect column headers. Make sure row 1 has: "Hall Attendant", "Audio Video", "AV Technical", etc.'); return; }
+  if(hRow<0){ showUploadError('Could not detect column headers.'); return; }
 
   const cols = data[hRow].map(h=>matchCol(h));
   for(const k in persons) persons[k]=[];
@@ -443,7 +471,7 @@ function loadFromMatrix(data){
 
 function finalizeLoad(){
   const warnings=[];
-  if(persons.avTech.length<1) warnings.push('AV Technical Person: none found — check column header matches "AV Technical" or "Audio Video Technical Person"');
+  if(persons.avTech.length<1) warnings.push('AV Technical Person: none found');
   if(persons.av.length<1) warnings.push('Audio Video: none found');
   if(persons.microphone.length<2) warnings.push('Microphone: fewer than 2 people');
 
@@ -479,6 +507,150 @@ function toggleManual(){
 function syncDaySelectors(){}
 
 // ═══════════════════════════════════════════════════════
+// WT CONDUCTOR MANAGEMENT
+// ═══════════════════════════════════════════════════════
+function addWtConductor(){
+  const input = document.getElementById('wtConductorInput');
+  const name = input.value.trim();
+  if(!name) return;
+  if(!wtConductors.includes(name)) {
+    wtConductors.push(name);
+    renderWtConductorList();
+  }
+  input.value = '';
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('wtConductorInput').addEventListener('keydown', e => {
+    if(e.key === 'Enter') { e.preventDefault(); addWtConductor(); }
+  });
+});
+function removeWtConductor(name){
+  wtConductors = wtConductors.filter(n => n !== name);
+  renderWtConductorList();
+}
+function renderWtConductorList(){
+  const el = document.getElementById('wtConductorList');
+  const info = document.getElementById('wtConductorInfo');
+  if(wtConductors.length === 0){
+    el.innerHTML = '<span style="font-size:.8rem;color:var(--text2)">No WT Conductors added yet.</span>';
+    info.style.display = 'none';
+    return;
+  }
+  el.innerHTML = wtConductors.map(n =>
+    `<span class="tag-chip">${n} <button onclick="removeWtConductor('${n.replace(/'/g,"\\'")}')">✕</button></span>`
+  ).join('');
+  info.style.display = 'block';
+  info.innerHTML = `<strong>ℹ Rule applied:</strong> ${wtConductors.map(n=>`<em>${n}</em>`).join(', ')} will receive at most <strong>one</strong> assignment among Last Prayer, WT Reading, and Chairman per calendar month.`;
+}
+
+// ═══════════════════════════════════════════════════════
+// PREVIOUS SCHEDULE UPLOAD
+// ═══════════════════════════════════════════════════════
+function prevEv(e){ e.preventDefault(); document.getElementById('prevZone').classList.add('drag'); }
+function prevDrop(e){
+  e.preventDefault();
+  document.getElementById('prevZone').classList.remove('drag');
+  handlePrevFile(e.dataTransfer.files[0]);
+}
+function handlePrevFile(file){
+  if(!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const errEl = document.getElementById('prevError');
+  errEl.style.display = 'none';
+  if(ext!=='xlsx'&&ext!=='xls'){
+    errEl.textContent = '⚠ Please upload an Excel (.xlsx) file.';
+    errEl.style.display = 'block';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      // Look for the "Schedule" sheet first, then fall back to first sheet
+      const sheetName = wb.SheetNames.includes('Schedule') ? 'Schedule' : wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      parsePrevSchedule(data, file.name);
+    } catch(ex){
+      document.getElementById('prevError').textContent = '⚠ Could not parse file: ' + ex.message;
+      document.getElementById('prevError').style.display = 'block';
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function parsePrevSchedule(data, filename){
+  // Find header row: look for "Date" and assignment columns
+  let hRow = -1;
+  const PREV_COL_MAP = {
+    'last prayer':    'Last Prayer',
+    'chairman':       'Chairman',
+    'wt reading':     'WT Reading',
+    'hall attendant': 'Hall Attendant',
+    'door attendant': 'Door Attendant',
+    'parking':        'Parking',
+    'av tech':        'AV',
+    'av':             'AV',
+    'stage 1':        'Stage',
+    'stage 2':        'Stage',
+    'stage':          'Stage',
+    'mic 1':          'Microphone',
+    'mic 2':          'Microphone',
+    'microphone':     'Microphone',
+  };
+  for(let r=0;r<Math.min(data.length,6);r++){
+    const row = data[r].map(c=>String(c).toLowerCase().trim());
+    if(row.some(c=>c==='date'||c==='last prayer'||c==='chairman')){hRow=r;break;}
+  }
+  if(hRow<0){
+    document.getElementById('prevError').textContent = '⚠ Could not find header row in previous schedule.';
+    document.getElementById('prevError').style.display = 'block';
+    return;
+  }
+
+  const colKeys = data[hRow].map(c=>{
+    const lc = String(c).toLowerCase().trim();
+    return PREV_COL_MAP[lc] || null;
+  });
+
+  prevCounts = {};
+  let rowCount = 0;
+  for(let r=hRow+1;r<data.length;r++){
+    const row = data[r];
+    // skip if first cell looks like a date or is empty
+    const firstCell = String(row[0]||'').trim();
+    if(!firstCell) continue;
+    rowCount++;
+    row.forEach((cell, c) => {
+      const key = colKeys[c];
+      if(!key) return;
+      // A cell may contain two names separated by newline (AV, Stage, Mic columns)
+      const names = String(cell).split(/\n|\//).map(n=>n.trim()).filter(Boolean);
+      names.forEach(name => {
+        if(!prevCounts[name]) prevCounts[name] = {};
+        prevCounts[name][key] = (prevCounts[name][key]||0) + 1;
+      });
+    });
+  }
+
+  const personCount = Object.keys(prevCounts).length;
+  const totalAssign = Object.values(prevCounts).reduce((s,o)=>s+Object.values(o).reduce((a,b)=>a+b,0),0);
+
+  document.getElementById('prevSuccess').style.display = 'block';
+  document.getElementById('prevSuccess').innerHTML =
+    `✓ Loaded previous schedule: <strong>${filename}</strong><br>
+     <small>${rowCount} meeting rows · ${personCount} people · ${totalAssign} total assignments carried over</small>`;
+  document.getElementById('prevError').style.display = 'none';
+}
+
+function clearPrevSchedule(){
+  prevCounts = {};
+  document.getElementById('prevSuccess').style.display = 'none';
+  document.getElementById('prevError').style.display = 'none';
+  document.getElementById('prevFileInput').value = '';
+}
+
+// ═══════════════════════════════════════════════════════
 // DATE / WEEK HELPERS
 // ═══════════════════════════════════════════════════════
 const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
@@ -495,6 +667,7 @@ function isoWeekKey(d){
   const wk=Math.ceil((((t-ys)/86400000)+1)/7);
   return `${t.getFullYear()}-${String(wk).padStart(2,'0')}`;
 }
+function monthKey(d){ return `${d.getFullYear()}-${d.getMonth()}`; }
 function getDayName(jsDay){ return DAY_NAMES[jsDay]; }
 function formatDateLabel(d){ return d.toLocaleDateString('en-US',{month:'long',year:'numeric'}); }
 
@@ -513,7 +686,7 @@ function generateSchedule(){
   const end  =new Date(endVal  +'T00:00:00');
   if(end<start){ showConfigError('End date must be after start date.'); return; }
   if(Object.values(persons).reduce((s,a)=>s+a.length,0)===0){
-    showConfigError('No names loaded. Please upload your assignment list file first.'); return;
+    showConfigError('No names loaded. Please upload your assignment list first.'); return;
   }
   hideConfigError();
 
@@ -525,13 +698,20 @@ function generateSchedule(){
     else if(d===midweekDay) meetingDates.push({date:new Date(cur),type:'Midweek'});
     cur.setDate(cur.getDate()+1);
   }
-  if(meetingDates.length===0){ showConfigError('No meeting days found in selected range.'); return; }
+  if(meetingDates.length===0){ showConfigError('No meeting dates found in range.'); return; }
 
-  // ── Init stats ──
+  // ── Init stats — seed from previous schedule if uploaded ──
   assignmentStats={};
   const allNames = [...new Set(Object.values(persons).flat())];
   allNames.forEach(n=>{
-    assignmentStats[n]={ catTotal:{}, weekAssigned:{}, catHistory:{}, lastMeeting:-99 };
+    const prev = prevCounts[n] || {};
+    assignmentStats[n]={
+      catTotal: {...prev},   // seed with previous period counts
+      weekAssigned:{},
+      catHistory:{},
+      lastMeeting: -99,
+      monthB: {}             // monthKey → count of B-group (LP/Chairman/WT) assignments for WT conductors
+    };
   });
 
   const warnings=[];
@@ -552,96 +732,104 @@ function generateSchedule(){
 }
 
 // ═══════════════════════════════════════════════════════
-// BUILD ROW  — Strict-fairness scheduler
+// BUILD ROW — Strict-fairness scheduler
 //
-// FAIRNESS GUARANTEE: max-count minus min-count ≤ 1 per role.
+// FAIRNESS GUARANTEE: max-count minus min-count ≤ 1 per role,
+//   computed across all qualified (eligible) persons.
 //
-// HOW IT WORKS:
-//   • Each role has its own counter (catTotal[key]).
-//   • pick() always chooses from the candidates with the LOWEST count
-//     for that role (the "floor" group).  If floor is empty after applying
-//     soft constraints, we still stay within floor ±1 — never beyond.
-//   • Soft constraints (recency, same-day, same-week) only filter WITHIN
-//     the fair tier; they never allow promoting a higher-count person over
-//     a lower-count one.
-//   • AV Tech and AV Normal share ONE counter ('AV') so total AV exposure
-//     is equal across all AV-eligible persons.
-//   • Stage and Microphone each have one shared counter across both slots.
+// KEY RULES:
+// 1. Floor-only picking: always pick from the subset at the
+//    global minimum count for that role. Soft constraints
+//    (recency, same-week) only filter WITHIN that floor set.
+// 2. WT Conductor rule: if a person is in wtConductors[],
+//    they can have at most 1 assignment among Last Prayer /
+//    WT Reading / Chairman per calendar month.
+// 3. Previous-schedule seeding: catTotal is pre-seeded from
+//    prevCounts so fairness spans across schedule periods.
 // ═══════════════════════════════════════════════════════
 function buildRow(date, type, meetingIdx, warnings){
   const isWeekend = type==='Weekend';
   const weekKey   = isoWeekKey(date);
+  const mKey      = monthKey(date);
   const usedToday = new Set();
 
   const st = n => {
     if(!assignmentStats[n])
-      assignmentStats[n]={ catTotal:{}, weekAssigned:{}, catHistory:{}, lastMeeting:-99 };
+      assignmentStats[n]={ catTotal:{}, weekAssigned:{}, catHistory:{}, lastMeeting:-99, monthB:{} };
     return assignmentStats[n];
   };
 
   // ── Strict-fair pick ──────────────────────────────────
   // pool       : eligible names for this slot
-  // counterKey : shared fairness counter key
+  // counterKey : shared fairness counter (global across full pool)
   // group      : 'A' or 'B' (weekly one-per-group limit)
+  // isBGroup   : true for Last Prayer / Chairman / WT Reading (WT Conductor rule applies)
   // ─────────────────────────────────────────────────────
-  const pick = (pool, counterKey, group) => {
+  const pick = (pool, counterKey, group, isBGroup=false) => {
     if(!pool||pool.length===0){
       warnings.push(`No people listed for "${counterKey}"`);
       return '—';
     }
 
-    // Step 1 [HARD] Not already used on this date
+    // STEP 1 [HARD] Not already used on this date
     let cands = pool.filter(n => !usedToday.has(n));
     if(cands.length===0){
       warnings.push(`⚠ Same-day pool exhausted for "${counterKey}" on ${fmtDate(date)}`);
       cands = [...pool];
     }
 
-    // Step 2: determine the fair tier (floor count, allow floor+1 only if floor is empty after soft filters)
-    const countOf = n => st(n).catTotal[counterKey]||0;
-    const floorCount = Math.min(...cands.map(countOf));
-    // Fair tier = those at floor count only (strict fairness)
-    let fairCands = cands.filter(n => countOf(n) === floorCount);
+    // STEP 2 [HARD for WT Conductors] Max 1 B-group assignment per month
+    if(isBGroup && wtConductors.length > 0){
+      const notMaxed = cands.filter(n => {
+        if(!wtConductors.includes(n)) return true;
+        return (st(n).monthB[mKey]||0) < 1;
+      });
+      // Only apply if it doesn't empty the pool entirely
+      if(notMaxed.length > 0) cands = notMaxed;
+      else warnings.push(`⚠ WT Conductor monthly limit reached for "${counterKey}" on ${fmtDate(date)}`);
+    }
 
-    // Step 3 [SOFT] Prefer not already assigned in this group this week — within fair tier
-    const notWeekFair = fairCands.filter(n => {
+    // STEP 3 [CORE FAIRNESS] Find the global floor count for this role
+    // across the ENTIRE eligible pool (not just remaining cands), then
+    // restrict cands to floor (or floor+1 only if no floor cands survive soft filters).
+    const countOf = n => st(n).catTotal[counterKey]||0;
+    const globalFloor = Math.min(...pool.map(countOf));
+    // Prefer floor candidates; if none available today, allow floor+1
+    const floorCands   = cands.filter(n => countOf(n) === globalFloor);
+    const floorP1Cands = cands.filter(n => countOf(n) <= globalFloor + 1);
+    let fairCands = floorCands.length > 0 ? floorCands : floorP1Cands;
+    if(fairCands.length === 0) fairCands = cands; // last resort
+
+    // STEP 4 [SOFT] Prefer not already in this group this week
+    const notWeek = fairCands.filter(n => {
       const ws = st(n).weekAssigned[weekKey];
       return !ws || !ws.has(group);
     });
-    // Apply week filter only if result is non-empty
-    let workCands = notWeekFair.length > 0 ? notWeekFair : fairCands;
+    let workCands = notWeek.length > 0 ? notWeek : fairCands;
 
-    // Step 4 [SOFT] Prefer not used in last 3 meetings for this role — within working set
+    // STEP 5 [SOFT] Prefer not used in last 3 meetings for this same role
     const notRecent = workCands.filter(n => {
       const h = st(n).catHistory[counterKey] || [];
       return h.length===0 || (meetingIdx - h[h.length-1]) >= 3;
     });
     if(notRecent.length > 0) workCands = notRecent;
     else {
-      // Fallback: at least not consecutive
       const notConsec = workCands.filter(n => {
         const h = st(n).catHistory[counterKey] || [];
         return h.length===0 || h[h.length-1] !== meetingIdx-1;
       });
       if(notConsec.length > 0) workCands = notConsec;
-      // else keep workCands as-is (unavoidable repeat, pool too small)
     }
 
-    // Step 5 [SOFT] If workCands is now empty (all soft filters stripped everyone),
-    // fall back to fair tier without soft constraints — fairness is paramount
-    if(workCands.length === 0) workCands = fairCands;
-
-    // Step 6: among finalists, break ties by longest gap since any assignment,
-    // then shuffle equally-tied names for variety
+    // STEP 6 [TIEBREAK] Longest gap since any assignment → shuffle equals
     workCands.sort((a,b) => {
       const ga = meetingIdx - st(a).lastMeeting;
       const gb = meetingIdx - st(b).lastMeeting;
-      return gb - ga; // longer gap first
+      return gb - ga;
     });
-    // Shuffle among those with equal lastMeeting gap (top stratum only)
     const topGap = meetingIdx - st(workCands[0]).lastMeeting;
     const topGroup = workCands.filter(n => (meetingIdx - st(n).lastMeeting) === topGap);
-    // Fisher-Yates shuffle on topGroup
+    // Fisher-Yates shuffle within the top gap group
     for(let i=topGroup.length-1;i>0;i--){
       const j=Math.floor(Math.random()*(i+1));
       [topGroup[i],topGroup[j]]=[topGroup[j],topGroup[i]];
@@ -657,6 +845,9 @@ function buildRow(date, type, meetingIdx, warnings){
     s.weekAssigned[weekKey].add(group);
     if(!s.catHistory[counterKey]) s.catHistory[counterKey] = [];
     s.catHistory[counterKey].push(meetingIdx);
+    if(isBGroup && wtConductors.includes(chosen)){
+      s.monthB[mKey] = (s.monthB[mKey]||0) + 1;
+    }
 
     return chosen;
   };
@@ -665,40 +856,33 @@ function buildRow(date, type, meetingIdx, warnings){
   // ASSIGN ROLES
   // ══════════════════════════════════════════════════
 
-  // ── Group A: operational ──
+  // Group A: Attendance
   const hall    = pick(persons.hallAttendant, 'Hall Attendant', 'A');
   const door    = pick(persons.doorAttendant, 'Door Attendant', 'A');
   const parking = pick(persons.parking,       'Parking',        'A');
 
-  // AV — SHARED COUNTER 'AV' for everyone in either pool
-  // Tech slot: eligible only from avTech list, sorted by shared 'AV' counter
+  // AV — SHARED counter 'AV' across tech + normal slots
   const avTechPerson = pick(persons.avTech, 'AV', 'A');
-
-  // Normal AV slot: av list minus the chosen tech person, same shared counter
   let avNormalPool = persons.av.filter(n => n !== avTechPerson && !usedToday.has(n));
   if(avNormalPool.length===0) avNormalPool = persons.av.filter(n => n !== avTechPerson);
   const avPerson = pick(avNormalPool, 'AV', 'A');
 
-  // Microphone — SHARED COUNTER 'Microphone' for both slots
+  // Microphone — SHARED counter 'Microphone' for both slots
   const mic1 = pick(persons.microphone, 'Microphone', 'A');
   let mic2Pool = persons.microphone.filter(n => n !== mic1 && !usedToday.has(n));
   if(mic2Pool.length===0) mic2Pool = persons.microphone.filter(n => n !== mic1);
   const mic2 = pick(mic2Pool, 'Microphone', 'A');
 
-  // ── Meeting-type specific ──
   let lastPrayer='', stage1='', stage2='', chairman='', wtReading='';
 
   if(isWeekend){
-    // Stage — 1 person, shared counter 'Stage'
     stage1 = pick(persons.stage, 'Stage', 'A');
-
-    // Group B: Last Prayer, Chairman, WT Reading — each own counter
-    lastPrayer = pick(persons.lastPrayer, 'Last Prayer', 'B');
-    chairman   = pick(persons.chairman,   'Chairman',    'B');
-    wtReading  = pick(persons.wtReading,  'WT Reading',  'B');
-
+    // B-group: WT Conductor rule applied (isBGroup=true)
+    lastPrayer = pick(persons.lastPrayer, 'Last Prayer', 'B', true);
+    chairman   = pick(persons.chairman,   'Chairman',    'B', true);
+    wtReading  = pick(persons.wtReading,  'WT Reading',  'B', true);
   } else {
-    // Midweek — 2 Stage persons, SAME shared counter 'Stage'
+    // Midweek: 2 stage slots, same shared counter
     stage1 = pick(persons.stage, 'Stage', 'A');
     let s2Pool = persons.stage.filter(n => n !== stage1 && !usedToday.has(n));
     if(s2Pool.length===0) s2Pool = persons.stage.filter(n => n !== stage1);
@@ -736,51 +920,54 @@ function renderTable(weekendName, midweekName){
 
 // ═══════════════════════════════════════════════════════
 // STATS
-// Counter keys used by the new algorithm:
-//   'AV'           → shared for both AV Tech slot and AV normal slot
-//   'Stage'        → shared for Stage-1 and Stage-2
-//   'Microphone'   → shared for Mic-1 and Mic-2
-//   'Last Prayer'  → own key
-//   'Chairman'     → own key
-//   'WT Reading'   → own key
-//   'Hall Attendant', 'Door Attendant', 'Parking' → own keys
 // ═══════════════════════════════════════════════════════
 function renderStats(){
   const el=document.getElementById('statsContent');
   const entries=Object.entries(assignmentStats).filter(([,s])=>Object.keys(s.catTotal||{}).length>0);
   if(!entries.length){ el.textContent='No data yet.'; return; }
 
-  // Compute actual slot-counts from the schedule rows for AV breakdown
-  // (since both tech and normal share the 'AV' counter, we track actual slots per row)
+  // Compute actual AV breakdown per person
   const actualAvTech={}, actualAvNorm={};
   schedule.forEach(r=>{
     if(r.avTech && r.avTech!=='—') actualAvTech[r.avTech]=(actualAvTech[r.avTech]||0)+1;
     if(r.av     && r.av!=='—')     actualAvNorm[r.av]    =(actualAvNorm[r.av]    ||0)+1;
   });
 
-  // Sort: total assignments desc
+  // Sort by total assignments descending
   entries.sort((a,b)=>{
     const ta=Object.values(a[1].catTotal||{}).reduce((s,v)=>s+v,0);
     const tb=Object.values(b[1].catTotal||{}).reduce((s,v)=>s+v,0);
     return tb-ta;
   });
 
-  // Compute min/max per column for colour-coding fairness
-  const cols=['Last Prayer','Chairman','WT Reading','AV','Stage','Microphone','Hall Attendant','Door Attendant','Parking'];
+  // Compute per-role min/max only among QUALIFIED people (those in the relevant pool)
+  const roleToPool = {
+    'Last Prayer':    persons.lastPrayer,
+    'Chairman':       persons.chairman,
+    'WT Reading':     persons.wtReading,
+    'Hall Attendant': persons.hallAttendant,
+    'Door Attendant': persons.doorAttendant,
+    'Parking':        persons.parking,
+    'AV':             [...new Set([...persons.avTech,...persons.av])],
+    'Stage':          persons.stage,
+    'Microphone':     persons.microphone,
+  };
+
   const colMin={}, colMax={};
-  cols.forEach(c=>{
-    const vals=entries.map(([,s])=>s.catTotal[c]||0).filter(v=>v>0);
-    colMin[c]=vals.length?Math.min(...vals):0;
-    colMax[c]=vals.length?Math.max(...vals):0;
+  Object.entries(roleToPool).forEach(([role, pool])=>{
+    if(!pool||pool.length===0){ colMin[role]=0; colMax[role]=0; return; }
+    const vals = pool.map(n => assignmentStats[n] ? (assignmentStats[n].catTotal[role]||0) : 0);
+    colMin[role] = Math.min(...vals);
+    colMax[role] = Math.max(...vals);
   });
-  // AV breakdown uses actual counts
+
   const avVals=[...Object.values(actualAvTech),...Object.values(actualAvNorm)].filter(v=>v>0);
   const avMin=avVals.length?Math.min(...avVals):0;
   const avMax=avVals.length?Math.max(...avVals):0;
 
-  // Fairness badge: red/orange if max-min > 1 (strict fairness violation)
-  const badge=(val, min, max)=>{
-    if(val===0) return `<span style="color:var(--text2)">${val}</span>`;
+  // Fairness badge
+  const badge=(val, min, max, inPool=true)=>{
+    if(!inPool || val===0) return `<span style="color:var(--text2)">${val}</span>`;
     const isHigh = val===max && max>min+1;
     const isLow  = val===min && max>min+1;
     const col    = isHigh?'#b71c1c': isLow?'#e65100':'var(--success)';
@@ -788,24 +975,60 @@ function renderStats(){
     return `<span style="color:${col};font-weight:700">${val}${flag}</span>`;
   };
 
-  // Compute per-role fairness summary
+  // Fairness summary — only count CURRENT period deltas (subtract prev counts)
   const fairnessSummary = [];
-  cols.forEach(c => {
-    const mn = colMin[c], mx = colMax[c];
-    if(mx > 0 && mx > mn+1) fairnessSummary.push(`"${c}" (max ${mx}, min ${mn})`);
+  Object.entries(roleToPool).forEach(([role, pool])=>{
+    if(!pool||pool.length===0) return;
+    // Compute CURRENT-period counts (total minus what was seeded from prev)
+    const currVals = pool.map(n => {
+      const total = assignmentStats[n] ? (assignmentStats[n].catTotal[role]||0) : 0;
+      const prev  = prevCounts[n] ? (prevCounts[n][role]||0) : 0;
+      return Math.max(0, total - prev);
+    });
+    const mn = Math.min(...currVals), mx = Math.max(...currVals);
+    if(mx > mn+1) fairnessSummary.push(`"${role}" (max ${mx}, min ${mn})`);
   });
 
-  let html=`<div style="font-size:.82rem;color:var(--text2);margin-bottom:14px">
-    <b>Fairness key:</b>
+  // WT Conductor monthly summary
+  let wtInfo = '';
+  if(wtConductors.length > 0){
+    const rows = wtConductors.map(name => {
+      const s = assignmentStats[name];
+      if(!s) return `<em>${name}</em>: not in schedule`;
+      const monthTotals = {};
+      ['Last Prayer','Chairman','WT Reading'].forEach(role => {
+        (s.catHistory[role]||[]).forEach(idx => {
+          const d = schedule[idx] ? schedule[idx].date : null;
+          if(d){ const mk = monthKey(d); monthTotals[mk]=(monthTotals[mk]||0)+1; }
+        });
+      });
+      const maxPerMonth = Object.values(monthTotals).length ? Math.max(...Object.values(monthTotals)) : 0;
+      const ok = maxPerMonth <= 1;
+      return `<em>${name}</em>: ${ok?'<span style="color:var(--success)">✓ max 1/month</span>':'<span style="color:#b71c1c">⚠ exceeded</span>'}`;
+    });
+    wtInfo = `<div style="margin-top:8px;padding:8px 12px;background:var(--gold-light);border-radius:var(--radius);font-size:.82rem">
+      <strong>WT Conductor check:</strong> ${rows.join(' &nbsp;|&nbsp; ')}
+    </div>`;
+  }
+
+  let html=`<div style="font-size:.82rem;color:var(--text2);margin-bottom:10px">
+    <b>Fairness key (current period):</b>
     <span style="color:#b71c1c;font-weight:700">■ High ⚠</span>&nbsp;
     <span style="color:#e65100;font-weight:700">■ Low ⚠</span>&nbsp;
     <span style="color:var(--success);font-weight:700">■ Balanced</span>&nbsp;—
-    Strict fairness: max − min ≤ 1 per role for all qualified persons.
-    AV column = total AV slots (tech + normal combined).
-    ${fairnessSummary.length===0
-      ? '<b style="color:var(--success)">✓ All roles are within ±1 — fully balanced!</b>'
+    min/max computed among qualified persons only.
+    <br>${fairnessSummary.length===0
+      ? '<b style="color:var(--success)">✓ All roles balanced (max − min ≤ 1)!</b>'
       : `<b style="color:#b71c1c">⚠ Imbalance in: ${fairnessSummary.join(', ')}</b>`}
+    ${wtInfo}
   </div>`;
+
+  // Note if prev schedule was seeded
+  if(Object.keys(prevCounts).length > 0){
+    html += `<div style="font-size:.78rem;color:var(--text2);margin-bottom:10px;padding:6px 10px;background:var(--surface2);border-radius:var(--radius)">
+      ℹ Totals below include carry-over from the previous schedule. Fairness check above is for current period only.
+    </div>`;
+  }
 
   html+=`<div style="overflow-x:auto;margin-bottom:20px">
   <table style="border-collapse:collapse;font-size:.75rem;width:100%;min-width:820px">
@@ -839,22 +1062,36 @@ function renderStats(){
     const lp=ch['Last Prayer']||0, chm=ch['Chairman']||0, wt=ch['WT Reading']||0;
     const av=ch['AV']||0;
     const avT=actualAvTech[name]||0, avN=actualAvNorm[name]||0;
-    const st=ch['Stage']||0, mc=ch['Microphone']||0;
+    const stg=ch['Stage']||0, mc=ch['Microphone']||0;
     const hall=ch['Hall Attendant']||0, door=ch['Door Attendant']||0, park=ch['Parking']||0;
+
+    // Determine pool membership for badge rendering
+    const inLP   = persons.lastPrayer.includes(name);
+    const inChm  = persons.chairman.includes(name);
+    const inWT   = persons.wtReading.includes(name);
+    const inHall = persons.hallAttendant.includes(name);
+    const inDoor = persons.doorAttendant.includes(name);
+    const inPark = persons.parking.includes(name);
+    const inAV   = persons.avTech.includes(name)||persons.av.includes(name);
+    const inStg  = persons.stage.includes(name);
+    const inMic  = persons.microphone.includes(name);
+
+    const wtTag  = wtConductors.includes(name) ? ' <span style="font-size:.68rem;background:#b8860b;color:white;padding:1px 5px;border-radius:8px;vertical-align:middle">WT Cond.</span>' : '';
+
     html+=`<tr style="background:${bg}">
-      <td style="padding:5px 8px;font-weight:600;border:1px solid var(--border)">${name}</td>
+      <td style="padding:5px 8px;font-weight:600;border:1px solid var(--border)">${name}${wtTag}</td>
       <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);font-weight:700">${total}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(lp,colMin['Last Prayer'],colMax['Last Prayer'])}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(chm,colMin['Chairman'],colMax['Chairman'])}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(wt,colMin['WT Reading'],colMax['WT Reading'])}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(hall,colMin['Hall Attendant'],colMax['Hall Attendant'])}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(door,colMin['Door Attendant'],colMax['Door Attendant'])}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(park,colMin['Parking'],colMax['Parking'])}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);font-weight:700">${badge(av,colMin['AV'],colMax['AV'])}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);font-size:.72rem">${badge(avT,avMin,avMax)}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);font-size:.72rem">${badge(avN,avMin,avMax)}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(st,colMin['Stage'],colMax['Stage'])}</td>
-      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(mc,colMin['Microphone'],colMax['Microphone'])}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(lp,colMin['Last Prayer'],colMax['Last Prayer'],inLP)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(chm,colMin['Chairman'],colMax['Chairman'],inChm)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(wt,colMin['WT Reading'],colMax['WT Reading'],inWT)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(hall,colMin['Hall Attendant'],colMax['Hall Attendant'],inHall)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(door,colMin['Door Attendant'],colMax['Door Attendant'],inDoor)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(park,colMin['Parking'],colMax['Parking'],inPark)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);font-weight:700">${badge(av,colMin['AV'],colMax['AV'],inAV)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);font-size:.72rem">${badge(avT,avMin,avMax,inAV)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border);font-size:.72rem">${badge(avN,avMin,avMax,inAV)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(stg,colMin['Stage'],colMax['Stage'],inStg)}</td>
+      <td style="padding:5px 8px;text-align:center;border:1px solid var(--border)">${badge(mc,colMin['Microphone'],colMax['Microphone'],inMic)}</td>
     </tr>`;
   });
   html+=`</tbody></table></div>`;
@@ -962,8 +1199,6 @@ function exportWord(){
 
 // ═══════════════════════════════════════════════════════
 // TEMPLATE DOWNLOAD
-// Headers match exactly what the parser expects.
-// "AV Technical" is the column name used in the actual Excel sample.
 // ═══════════════════════════════════════════════════════
 function downloadTemplate(){
   const wb=XLSX.utils.book_new();
@@ -976,13 +1211,11 @@ function downloadTemplate(){
     ['Renju Kurian',  'Renju Kurian',  'Renju Kurian',  'Renju Kurian',  'Johnson Baby',  'Kenez T Robin', 'Kenez T Robin','Kenez T Robin','Renju Kurian','Renju Kurian'],
     ['Ebin K Baby',   'Ebin K Baby',   'Ebin K Baby',   'Ebin K Baby',   'Paulson Baby',  'Robin T P',     'Robin T P',   'Robin T P',     'Ebin K Baby', 'Ebin K Baby'],
     ['Joseph A S',    'Joseph A S',    'Joseph A S',    'Joseph A S',    'Roshan Joseph', 'Alphin Alex',   'Alphin Alex', 'Alphin Alex',   'Joseph A S',  'Phipson Joseph'],
-    ['Phipson Joseph','Phipson Joseph','Phipson Joseph','Phipson Joseph','Alex Baby',     'Alex Baby',     'Alex Baby',   'Alex Baby',     'Phipson Joseph','Paulson Baby'],
+    ['Phipson Joseph','Phipson Joseph','Phipson Joseph','Phipson Joseph','',              'Alex Baby',     'Alex Baby',   'Alex Baby',     'Phipson Joseph','Paulson Baby'],
     ['Paulson Baby',  'Paulson Baby',  'Paulson Baby',  'Paulson Baby',  '',              'Albern Joseph', 'Albern Joseph','Albern Joseph','Paulson Baby','Johnson Baby'],
     ['Rajesh K',      'Rajesh K',      'Rajesh K',      'Joyal Bijoy',   '',              'Bijoy Enas',    'Bijoy Enas',  'Bijoy Enas',    'Joyal Bijoy', 'Joyal Bijoy'],
     ['Padmakumar M',  'Padmakumar M',  'Padmakumar M',  'Paul T C',      '',              'Joyal Bijoy',   'Joyal Bijoy', 'Joyal Bijoy',   'Paul T C',    'Paul T C'],
     ['',              '',              '',              'Renju Kurian',  '',              'Johnson Baby',  'Johnson Baby','Johnson Baby',  'Rajesh K',    'Rajesh K'],
-    ['',              '',              '',              '',              '',              'Roshan Joseph', 'Paulson Baby','Paulson Baby',  '',            ''],
-    ['',              '',              '',              '',              '',              '',              'Roshan Joseph','Roshan Joseph','',            ''],
   ];
   const ws=XLSX.utils.aoa_to_sheet([headers,...data]);
   ws['!cols']=headers.map(()=>({wch:22}));
@@ -1020,8 +1253,9 @@ window.addEventListener('DOMContentLoaded',()=>{
   const last=new Date(y,now.getMonth()+1,0).getDate();
   document.getElementById('startDate').value=`${y}-${m}-01`;
   document.getElementById('endDate').value=`${y}-${m}-${String(last).padStart(2,'0')}`;
+  renderWtConductorList();
 });
-  
+
 </script>
 </body>
 </html>
